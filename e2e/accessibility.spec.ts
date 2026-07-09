@@ -3,7 +3,21 @@ import { expect, test } from '@playwright/test';
 
 import { gotoReady } from './helpers';
 
-const routes = ['/', '/help', '/settings', '/privacy', '/terms', '/license'];
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const routes = [
+  '/',
+  '/help',
+  '/settings',
+  '/privacy',
+  '/terms',
+  '/license',
+  '/stats',
+  `/play/daily/${todayUtc()}`,
+  '/?mode=timed&difficulty=hard&duration=60&score=412&wpm=88',
+];
 const themes: readonly ('light' | 'dark')[] = ['light', 'dark'];
 
 for (const theme of themes) {

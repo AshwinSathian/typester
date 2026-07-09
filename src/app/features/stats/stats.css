@@ -88,9 +88,12 @@
   gap: var(--space-2);
 }
 
-/* Locked achievements are visibly locked (opacity + a lock glyph), not just
-   "already there but grey" - the full possibility space is legible before
-   it's earned (DESIGN §Stats/Progress screen). */
+/* Locked achievements are visibly locked (a muted fill, dashed border, and a
+   lock glyph), not just "already there but grey" - the full possibility
+   space is legible before it's earned (DESIGN §Stats/Progress screen).
+   Deliberately not opacity-faded: fading --color-text-muted further would
+   drop its contrast below WCAG AA (axe caught this in Phase 8's first
+   pass) - the muted token is already the "recede" signal on its own. */
 .stats__achievement {
   display: inline-flex;
   align-items: center;
@@ -98,11 +101,10 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
+  border: 1px dashed var(--color-border);
   color: var(--color-text-muted);
   font-size: var(--text-xs);
   font-weight: 600;
-  opacity: 0.4;
 }
 
 .stats__achievement-lock {
@@ -114,8 +116,7 @@
 /* Celebratory fill for unlocked achievements - reads as "earned" at a
    glance, matching the upgraded Results-screen chip treatment. */
 .stats__achievement--unlocked {
-  opacity: 1;
   background: color-mix(in oklch, var(--color-accent) 12%, var(--color-surface));
-  border-color: var(--color-accent);
+  border: 1px solid var(--color-accent);
   color: var(--color-accent-strong);
 }

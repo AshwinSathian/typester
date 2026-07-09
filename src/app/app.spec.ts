@@ -40,4 +40,17 @@ describe('App', () => {
     fixture.detectChanges();
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
   });
+
+  it('removes the notice banner from the DOM entirely once dismissed, reclaiming its space', async () => {
+    const storage = TestBed.inject(StorageService);
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.app-notice-banner')).not.toBeNull();
+
+    storage.updateSettings({ localStorageNoticeDismissed: true });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.app-notice-banner')).toBeNull();
+  });
 });

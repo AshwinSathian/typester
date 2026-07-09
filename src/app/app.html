@@ -1,5 +1,4 @@
 <a class="skip-link" href="#main-content">Skip to content</a>
-<router-outlet />
 
 <app-notice-banner
   [visible]="!storage.settings().localStorageNoticeDismissed"
@@ -9,3 +8,5 @@
   sent to a server except a request for fresh words each round.
   <a routerLink="/privacy">Privacy policy</a>
 </app-notice-banner>
+
+<router-outlet />

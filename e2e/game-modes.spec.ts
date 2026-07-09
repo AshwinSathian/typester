@@ -11,12 +11,12 @@ test('Game Modes: pick difficulty + duration, play, and reach results', async ({
 
   await page
     .locator('#mode-picker app-segmented-control')
-    .first()
+    .nth(1)
     .getByRole('radio', { name: 'Hard' })
     .click();
   await page
     .locator('#mode-picker app-segmented-control')
-    .nth(1)
+    .nth(2)
     .getByRole('radio', { name: '30s' })
     .click();
   await page.getByRole('button', { name: 'Start' }).click();
