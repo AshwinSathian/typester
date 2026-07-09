@@ -7,6 +7,15 @@
   background: var(--color-surface-raised);
   border-radius: var(--radius-md);
   min-width: 4.5rem;
+  transition: box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.app-stat-badge--energy {
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-energy) 50%, transparent);
+}
+
+.app-stat-badge--energy .app-stat-badge__value {
+  color: var(--color-energy-strong);
 }
 
 .app-stat-badge__label {

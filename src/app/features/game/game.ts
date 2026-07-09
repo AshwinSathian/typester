@@ -31,7 +31,11 @@ type Phase = 'loading' | 'playing' | 'finished';
 type Feedback = 'none' | 'correct' | 'incorrect';
 
 const TICK_INTERVAL_MS = 100;
-const FEEDBACK_DURATION_MS = 150;
+/** Correct feedback stays instant (DESIGN-typester.md §Sound); incorrect
+ *  holds a beat longer (matches --duration-slow) so the per-character
+ *  mistake diff is actually readable, not just flashed. */
+const CORRECT_FEEDBACK_MS = 150;
+const INCORRECT_FEEDBACK_MS = 420;
 
 @Component({
   selector: 'app-game',
@@ -54,6 +58,21 @@ export class Game implements OnInit {
   protected readonly snapshot = signal<SessionSnapshot | null>(null);
   protected readonly remainingSeconds = signal(0);
   protected readonly feedback = signal<Feedback>('none');
+  protected readonly typedValue = signal('');
+
+  /** Per-character diff of the last incorrect submission against the target
+   *  word - a precision-instrument detail (DESIGN-typester.md §Game) showing
+   *  exactly which keystrokes were wrong, not just that the word was wrong. */
+  protected readonly mistypedChars = computed<readonly boolean[]>(() => {
+    if (this.feedback() !== 'incorrect') return [];
+    const target = this.snapshot()?.currentWord?.text ?? '';
+    const typed = this.typedValue();
+    const length = Math.max(target.length, typed.length);
+    return Array.from(
+      { length },
+      (_, i) => (typed[i] ?? '').toLowerCase() !== (target[i] ?? '').toLowerCase(),
+    );
+  });
 
   protected readonly config = computed<GameConfig>(() => ({
     mode: this.mode() as GameMode,
@@ -64,7 +83,13 @@ export class Game implements OnInit {
   protected readonly liveAnnouncement = computed(() => {
     const snap = this.snapshot();
     if (!snap) return '';
-    return `Score ${snap.score}, streak ${snap.streak}`;
+    const outcome =
+      this.feedback() === 'correct'
+        ? 'Correct. '
+        : this.feedback() === 'incorrect'
+          ? 'Incorrect. '
+          : '';
+    return `${outcome}Score ${snap.score}, streak ${snap.streak}`;
   });
 
   private readonly answerInputRef = viewChild<ElementRef<HTMLInputElement>>('answerInput');
@@ -95,6 +120,10 @@ export class Game implements OnInit {
     void this.beginRound();
   }
 
+  protected onInput(inputEl: HTMLInputElement): void {
+    this.typedValue.set(inputEl.value);
+  }
+
   protected onSubmit(inputEl: HTMLInputElement): void {
     if (this.phase() !== 'playing' || !this.session) return;
     const value = inputEl.value;
@@ -106,6 +135,7 @@ export class Game implements OnInit {
 
     if (outcome.correct) {
       inputEl.value = '';
+      this.typedValue.set('');
       const streak = outcome.snapshot.streak;
       this.sound.play(streak > 0 && streak % 5 === 0 ? 'combo' : 'correct');
     } else {
@@ -189,6 +219,7 @@ export class Game implements OnInit {
   private showFeedback(kind: Feedback): void {
     this.feedback.set(kind);
     if (this.feedbackTimeoutId !== null) clearTimeout(this.feedbackTimeoutId);
-    this.feedbackTimeoutId = setTimeout(() => this.feedback.set('none'), FEEDBACK_DURATION_MS);
+    const duration = kind === 'correct' ? CORRECT_FEEDBACK_MS : INCORRECT_FEEDBACK_MS;
+    this.feedbackTimeoutId = setTimeout(() => this.feedback.set('none'), duration);
   }
 }

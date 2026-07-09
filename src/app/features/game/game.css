@@ -4,7 +4,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-6);
+  gap: var(--space-4);
   padding: var(--space-6) var(--space-4);
   container-type: inline-size;
 }
@@ -12,6 +12,41 @@
 .game__loading {
   color: var(--color-text-muted);
   font-size: var(--text-lg);
+}
+
+/* The "spotlight": word + input are the product (DESIGN-typester.md §Game
+   philosophy), so they get their own glow rather than floating in empty
+   space. The glow intensifies and shifts to the energy accent while a
+   combo multiplier is active, tying visual state to game state. */
+.game__spotlight {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
+}
+
+.game__spotlight::before {
+  content: '';
+  position: absolute;
+  inset: -15% 0%;
+  z-index: -1;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--color-accent) 14%, transparent) 0%,
+    transparent 70%
+  );
+  transition: background var(--duration-base) var(--ease-standard);
+  pointer-events: none;
+}
+
+.game__spotlight--combo::before {
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--color-energy) 20%, transparent) 0%,
+    transparent 70%
+  );
 }
 
 .game__word {
@@ -25,18 +60,21 @@
 }
 
 .game__word--power {
-  color: var(--color-accent);
-  text-decoration: underline;
-  text-decoration-thickness: 3px;
-  text-underline-offset: 0.3em;
+  color: var(--color-energy-strong);
+  animation: game-power-pulse 1.4s var(--ease-standard) infinite;
 }
 
+/* Correct/incorrect differ in motion, not just hue (accessibility
+   checklist: color is never the only signal) - a pop reads as "good,
+   move on", a shake reads as "no, look again" independent of color vision. */
 .game__word--correct {
   color: var(--color-success);
+  animation: game-pop var(--duration-fast) var(--ease-spring);
 }
 
 .game__word--incorrect {
   color: var(--color-danger);
+  animation: game-shake var(--duration-slow) var(--ease-standard);
 }
 
 .game__input {
@@ -49,15 +87,94 @@
   border: 2px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
-  transition: border-color var(--duration-instant) var(--ease-standard);
+  transition:
+    border-color var(--duration-instant) var(--ease-standard),
+    box-shadow var(--duration-instant) var(--ease-standard);
+}
+
+.game__input:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-accent) 25%, transparent);
 }
 
 .game__input--correct {
   border-color: var(--color-success);
+  animation: game-pop var(--duration-fast) var(--ease-spring);
 }
 
 .game__input--incorrect {
   border-color: var(--color-danger);
+  animation: game-shake var(--duration-slow) var(--ease-standard);
+}
+
+@keyframes game-pop {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes game-shake {
+  10%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  80% {
+    transform: translateX(3px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-5px);
+  }
+  40%,
+  60% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes game-power-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 0 transparent;
+  }
+  50% {
+    text-shadow: 0 0 18px color-mix(in oklch, var(--color-energy) 65%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game__word--power {
+    animation: none;
+    text-shadow: 0 0 10px color-mix(in oklch, var(--color-energy) 55%, transparent);
+  }
+}
+:root[data-motion='reduced'] .game__word--power {
+  animation: none;
+  text-shadow: 0 0 10px color-mix(in oklch, var(--color-energy) 55%, transparent);
+}
+
+.game__diff {
+  display: flex;
+  gap: 0.05em;
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  letter-spacing: 0.05em;
+  min-height: 1.5em;
+}
+
+.game__diff-char {
+  color: var(--color-text-muted);
+}
+
+.game__diff-char--wrong {
+  color: var(--color-danger);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
 }
 
 .game__stats {

@@ -9,33 +9,51 @@
       [totalSeconds]="config().durationSeconds"
     />
 
-    <div
-      class="game__word"
-      [class.game__word--power]="snap.currentWord?.isPowerWord"
-      [class.game__word--correct]="feedback() === 'correct'"
-      [class.game__word--incorrect]="feedback() === 'incorrect'"
-    >
-      {{ snap.currentWord?.text }}
-    </div>
+    <div class="game__spotlight" [class.game__spotlight--combo]="snap.multiplier > 1">
+      <div
+        class="game__word"
+        [class.game__word--power]="snap.currentWord?.isPowerWord"
+        [class.game__word--correct]="feedback() === 'correct'"
+        [class.game__word--incorrect]="feedback() === 'incorrect'"
+      >
+        {{ snap.currentWord?.text }}
+      </div>
 
-    <input
-      #answerInput
-      class="game__input"
-      [class.game__input--correct]="feedback() === 'correct'"
-      [class.game__input--incorrect]="feedback() === 'incorrect'"
-      type="text"
-      autocomplete="off"
-      autocapitalize="off"
-      spellcheck="false"
-      aria-label="Type the word shown above"
-      (keydown.enter)="onSubmit(answerInput)"
-    />
+      <input
+        #answerInput
+        class="game__input"
+        [class.game__input--correct]="feedback() === 'correct'"
+        [class.game__input--incorrect]="feedback() === 'incorrect'"
+        type="text"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-label="Type the word shown above"
+        (input)="onInput(answerInput)"
+        (keydown.enter)="onSubmit(answerInput)"
+      />
+
+      @if (feedback() === 'incorrect') {
+        <div class="game__diff" aria-hidden="true">
+          @for (wrong of mistypedChars(); track $index) {
+            <span class="game__diff-char" [class.game__diff-char--wrong]="wrong">{{
+              typedValue()[$index] ?? '·'
+            }}</span>
+          }
+        </div>
+      }
+    </div>
 
     <div class="game__stats">
       <app-stat-badge label="Score" [value]="snap.score" />
       <app-stat-badge label="Streak" [value]="snap.streak" />
+      @if (snap.multiplier > 1) {
+        <app-stat-badge label="Combo" [value]="snap.multiplier" suffix="×" variant="energy" />
+      }
     </div>
 
-    <div class="sr-only" role="status" aria-live="polite">{{ liveAnnouncement() }}</div>
+    <div class="sr-only" role="status" aria-live="polite">
+      {{ liveAnnouncement() }}
+    </div>
   }
 </main>

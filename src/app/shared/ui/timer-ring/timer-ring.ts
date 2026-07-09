@@ -12,29 +12,39 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 @Component({
   selector: 'app-timer-ring',
   template: `
-    <svg
-      viewBox="0 0 100 100"
-      class="app-timer-ring"
-      [class.app-timer-ring--warning]="severity() === 'warning'"
-      [class.app-timer-ring--danger]="severity() === 'danger'"
-      role="img"
-      [attr.aria-label]="ariaLabel()"
-    >
-      <circle
-        class="app-timer-ring__track"
-        [attr.cx]="center"
-        [attr.cy]="center"
-        [attr.r]="radius"
-      />
-      <circle
-        class="app-timer-ring__progress"
-        [attr.cx]="center"
-        [attr.cy]="center"
-        [attr.r]="radius"
-        [attr.stroke-dasharray]="circumference"
-        [attr.stroke-dashoffset]="strokeDashoffset()"
-      />
-    </svg>
+    <div class="app-timer-ring-wrap">
+      <svg
+        viewBox="0 0 100 100"
+        class="app-timer-ring"
+        [class.app-timer-ring--warning]="severity() === 'warning'"
+        [class.app-timer-ring--danger]="severity() === 'danger'"
+        role="img"
+        [attr.aria-label]="ariaLabel()"
+      >
+        <circle
+          class="app-timer-ring__track"
+          [attr.cx]="center"
+          [attr.cy]="center"
+          [attr.r]="radius"
+        />
+        <circle
+          class="app-timer-ring__progress"
+          [attr.cx]="center"
+          [attr.cy]="center"
+          [attr.r]="radius"
+          [attr.stroke-dasharray]="circumference"
+          [attr.stroke-dashoffset]="strokeDashoffset()"
+        />
+      </svg>
+      <span
+        class="app-timer-ring__value"
+        [class.app-timer-ring__value--warning]="severity() === 'warning'"
+        [class.app-timer-ring__value--danger]="severity() === 'danger'"
+        aria-hidden="true"
+      >
+        {{ displaySeconds() }}
+      </span>
+    </div>
   `,
   styleUrl: './timer-ring.css',
 })
@@ -61,7 +71,9 @@ export class TimerRing {
     return 'accent';
   });
 
-  protected readonly ariaLabel = computed(
-    () => `${Math.max(0, Math.ceil(this.remainingSeconds()))} seconds remaining`,
+  protected readonly displaySeconds = computed(() =>
+    Math.max(0, Math.ceil(this.remainingSeconds())),
   );
+
+  protected readonly ariaLabel = computed(() => `${this.displaySeconds()} seconds remaining`);
 }
