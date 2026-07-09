@@ -1,0 +1,39 @@
+@if (result(); as result) {
+  <main id="main-content" class="results">
+    @if (isNewBest()) {
+      <p class="results__badge">New Best</p>
+    }
+
+    <div class="results__grid">
+      <app-stat-badge label="Score" [value]="result.baseScore" />
+      <app-stat-badge label="Time Bonus" [value]="result.timeBonus" />
+      <app-stat-badge label="Total" [value]="result.totalScore" />
+      <app-stat-badge label="WPM" [value]="result.wpm" />
+      <app-stat-badge label="Accuracy" [value]="accuracyPercent()" suffix="%" />
+    </div>
+
+    @if (unlockedAchievements().length > 0) {
+      <div class="results__achievements">
+        @for (achievement of unlockedAchievements(); track achievement.id) {
+          <span class="results__achievement" [title]="achievement.description">
+            {{ achievement.title }}
+          </span>
+        }
+      </div>
+    }
+
+    <div class="results__actions">
+      <app-button variant="primary" [fullWidth]="true" (pressed)="playAgain()">
+        Play Again
+      </app-button>
+      <app-button variant="secondary" [fullWidth]="true" (pressed)="shareResult()">
+        Share
+      </app-button>
+      <app-button variant="ghost" [fullWidth]="true" (pressed)="goToMenu()">Menu</app-button>
+    </div>
+
+    @if (toastMessage(); as message) {
+      <app-toast [message]="message" (dismissed)="dismissToast()" />
+    }
+  </main>
+}

@@ -1,0 +1,46 @@
+<main id="main-content" class="settings">
+  <h1 class="settings__title">Settings</h1>
+
+  <div class="settings__field">
+    <label for="theme">Theme</label>
+    <select id="theme" [formField]="settingsForm.theme" (change)="onThemeChange($event)">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+  </div>
+
+  <div class="settings__field settings__field--row">
+    <label for="sound">Sound</label>
+    <input
+      id="sound"
+      type="checkbox"
+      [formField]="settingsForm.soundEnabled"
+      (change)="onSoundChange($event)"
+    />
+  </div>
+
+  <div class="settings__field">
+    <label for="motion">Motion</label>
+    <select id="motion" [formField]="settingsForm.motion" (change)="onMotionChange($event)">
+      <option value="system">System</option>
+      <option value="full">Full motion</option>
+      <option value="reduced">Reduced motion</option>
+    </select>
+  </div>
+
+  <div class="settings__field">
+    <label for="quick-duration">Quick Play duration (seconds)</label>
+    <input
+      id="quick-duration"
+      type="number"
+      [formField]="settingsForm.quickPlayDurationSeconds"
+      (change)="onQuickPlayDurationChange($event)"
+    />
+    @if (settingsForm.quickPlayDurationSeconds().invalid()) {
+      <p class="settings__error" role="alert">Must be between 15 and 300 seconds.</p>
+    }
+  </div>
+
+  <app-button variant="ghost" [fullWidth]="true" (pressed)="goToMenu()">Back to Menu</app-button>
+</main>
