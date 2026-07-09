@@ -133,11 +133,12 @@ for releases.
 | Component                                                            | New/Modified                       | Notes                                                                                   |
 | -------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------- |
 | `src/app/core/models/*`                                              | New (folder scaffolded, files TBD) | `Word`, `Difficulty`, `GameConfig`, `GameResult`, `Settings`, `Stats` types             |
-| `src/app/core/services/game-engine.ts`                               | New                                | Pure TS, zero Angular imports — word draw, scoring, WPM/accuracy, session state machine |
-| `src/app/core/services/storage.service.ts`                           | New                                | Versioned `localStorage` wrapper for settings/stats/best-scores                         |
+| `src/app/core/services/game-engine.ts`                               | New                                | Pure TS, zero Angular imports — word draw, scoring, combo multiplier, WPM/accuracy, session state machine |
+| `src/app/core/services/word-source.service.ts`                       | New                                | Fetches per-round words from Datamuse (`HttpClient`, timeout+validate), falls back to bundled word bank |
+| `src/app/core/services/storage.service.ts`                           | New                                | Versioned `localStorage` wrapper for settings/stats/best-scores, `storage`-event reconciliation |
 | `src/app/core/services/sound.service.ts`                             | New                                | Web Audio API synthesized SFX, no shipped audio assets                                  |
 | `src/app/core/guards/game-config.guard.ts`                           | New                                | Functional `CanActivateFn` validating `/play/:mode/:difficulty/:duration`               |
-| `src/app/shared/data/word-bank.ts`                                   | New                                | ~150+ curated words per tier (replaces legacy's 10)                                     |
+| `src/app/shared/data/word-bank.ts`                                   | New                                | ~150+ curated words per tier — fallback source, replaces legacy's 10                    |
 | `src/app/shared/ui/*`                                                | New                                | button, segmented-control, stat-badge, timer-ring, toast, dialog                        |
 | `src/app/features/home/*`                                            | New                                | Landing + mode/difficulty picker                                                        |
 | `src/app/features/game/*`                                            | New                                | Core gameplay screen                                                                    |
@@ -204,14 +205,19 @@ Vitest (no `TestBed`). This directly fixes legacy defect #1 (DOM-manipulating
 timer) — the timer/session state machine lives here as data, and a thin
 Angular wrapper renders it reactively via signals/`effect()`.
 
-**D5 — Word bank: bundled static data, not a live API.**
-Target ≥150 curated words per difficulty tier (vs. legacy's 10), sourced from
-a permissively-licensed public word list (see Open Questions for exact
-source), bundled into the JS bundle at build time. _Alternative considered_:
-fetch from a free dictionary/word API at runtime — rejected: adds a network
-dependency and failure mode, breaks offline PWA play, and no free API tier is
-guaranteed to stay free indefinitely (violates the "no paid services,
-ever" constraint's spirit over the app's lifetime).
+**D5 — Word bank: live API per round, bundled curated list as fallback.**
+_Superseded 2026-07-09 — see §Open Questions — resolved._ Original decision
+(bundle-only, no runtime fetch) is preserved below for history; the shipping
+behavior is now: `word-source.service.ts` fetches fresh words from the
+free/keyless Datamuse API at the start of every round (more variety than any
+fixed bundle could give), constrained to each difficulty tier's length/
+frequency band, with the bundled ≥150-word-per-tier curated list
+(`shared/data/word-bank.ts`, still built and tested as originally planned)
+serving as the fallback when the fetch fails, times out, or the device is
+offline. This keeps the original concern (offline-safe, no hard dependency on
+a third party staying free/up) fully addressed while adding session-to-session
+variety the static-only version couldn't. No API key, quota, or paid tier is
+involved on either path.
 
 **D6 — Tailwind CSS v4 (CLI-native) + hand-authored OKLCH design tokens,
 not a UI kit.**
@@ -324,8 +330,9 @@ artifacts in place, so Phase 2 can start with zero setup friction.
 
 - [ ] Define shared models in `core/models` (`Word`, `Difficulty`, `GameConfig`, `GameResult`, `Settings`, `Stats`) — AC: `tsc` compiles with `strict` on (already enabled); no `any` types.
 - [ ] Build curated word bank in `shared/data/word-bank.ts` (≥150 unique words/tier) — AC: unit test asserts uniqueness within and across tiers, and that every word matches `/^[a-z]+$/`.
-- [ ] Implement `core/services/game-engine.ts` (pure TS: Fisher-Yates draw-without-replacement, scoring, WPM = `correctChars / 5 / minutesElapsed`, accuracy = `correct / attempts`, `idle → playing → finished` state machine) — AC: Vitest reports ≥90% branch coverage on this file; every state transition has a dedicated test.
-- [ ] Implement `core/services/storage.service.ts` (versioned `localStorage` wrapper) — AC: tests cover fresh-install defaults, round-trip persistence, and fallback-to-defaults on corrupted/unparsable stored data.
+- [ ] Implement `core/services/game-engine.ts` (pure TS: Fisher-Yates draw-without-replacement, scoring incl. streak combo multiplier and power-word bonus, WPM = `correctChars / 5 / minutesElapsed`, accuracy = `correct / attempts`, `idle → playing → finished` state machine) — AC: Vitest reports ≥90% branch coverage on this file; every state transition has a dedicated test.
+- [ ] Implement `core/services/word-source.service.ts` (Datamuse fetch per round, difficulty-band query params, response validation, `AbortController` timeout, fallback to the bundled word bank) — AC: tests cover a successful fetch, a timeout, a malformed response, and an offline/network-error case, all three failure modes falling back correctly.
+- [ ] Implement `core/services/storage.service.ts` (versioned `localStorage` wrapper, schema version key, `storage`-event listener reconciling best-scores across tabs) — AC: tests cover fresh-install defaults, round-trip persistence, fallback-to-defaults on corrupted/unparsable stored data, and a simulated cross-tab `storage` event updating in-memory state.
 - [ ] Implement `core/services/sound.service.ts` (Web Audio synthesized cues, respects a mute setting) — AC: test verifies no exception is thrown when `AudioContext` is unavailable (true in the jsdom test environment).
 - [ ] Implement `core/guards/game-config.guard.ts` (functional `CanActivateFn` validating `/play/:mode/:difficulty/:duration`) — AC: tests cover both a valid and an invalid param combination, confirming the invalid case redirects home.
       **Exit criteria**: `npm test` is green with the above coverage; a reviewer can read `game-engine.ts` and its tests alone and understand the entire game's rules without looking at any UI code.
@@ -340,7 +347,8 @@ artifacts in place, so Phase 2 can start with zero setup friction.
 - [ ] Shared UI primitives (`button`, `segmented-control`, `stat-badge`, `timer-ring`, `toast`, native `<dialog>`-based modal) in `shared/ui` — AC: each is a standalone component using `input()`/`output()` (no decorators), each has a Vitest component test.
 - [ ] Home screen incl. mode/difficulty picker — AC: matches `DESIGN-typester.md` §Home; fully keyboard-navigable (Tab/Enter only, no mouse) end to end.
 - [ ] Game screen (word prompt, typing field, `timer-ring`, combo/streak feedback, `aria-live` score/timer announcements) — AC: a correct submission advances to the next word with a single Enter keystroke and no click; `@axe-core/playwright` reports 0 serious violations.
-- [ ] Results screen — AC: given a fixture `GameResult`, score/WPM/accuracy/best-score-delta all render the mathematically correct values (component test, not a snapshot).
+- [ ] Results screen incl. achievement badges and a Share action (`ShareService`: `navigator.share` where available, clipboard-copy + `Toast` fallback otherwise) — AC: given a fixture `GameResult`, score/WPM/accuracy/best-score-delta and unlocked achievements all render the mathematically correct values (component test, not a snapshot); share action is exercised in a Playwright test with the Web Share API mocked out.
+- [ ] SEO/meta pass on prerendered public routes (Home, Help, Settings, legal pages): per-route `<title>`/meta description via Angular's `Title`/`Meta` services, Open Graph + Twitter Card tags, one `WebApplication` JSON-LD block, `public/robots.txt`, generated `public/sitemap.xml` — AC: `curl` against the prerendered static output shows real tags (not the CLI default placeholder title) on every public route.
 - [ ] Settings screen using Signal Forms (`@angular/forms/signals`) — AC: every field change persists via `StorageService` and survives a full page reload (Playwright test).
 - [ ] Help/FAQ screen — AC: static content renders; passes axe.
 - [ ] Routing: lazy-loaded features via `loadComponent`, `withViewTransitions()` enabled on the router — AC: navigating between routes triggers a View Transition unless `prefers-reduced-motion: reduce` is set, in which case it's instant.
@@ -377,13 +385,66 @@ artifacts in place, so Phase 2 can start with zero setup friction.
 - **Runbook**: `ops/README.md` — one-time setup, subsequent deploys (`ops/deploy.sh`), and rollback (re-point the `current` symlink to a prior timestamped release, no rebuild needed).
 - **On-call implications**: none — single-user hobby deployment, no SLA.
 
-## ❓ Open Questions
+## ❓ Open Questions — resolved 2026-07-09
 
-- [ ] Is `ashwinsathian.com` already using Cloudflare nameservers on the free plan? This RFC assumes yes (required for the Tunnel + custom-hostname setup in Phase 4). — owner: Ashwin, target resolution: before Phase 4 ops execution.
-- [ ] Word bank source: hand-curate ~150+ words/tier from scratch, or filter a permissively-licensed open word list (e.g. a CC0/MIT frequency list) down to three difficulty tiers? — owner: Ashwin, target resolution: start of Phase 2.
-- [ ] Best-score/stats scope: one global high score, or tracked per mode+difficulty+duration combination (more granular, more "game-like")? Affects `StorageService`'s schema. — owner: Ashwin, target resolution: start of Phase 2.
-- [ ] Is a "share your score" affordance (Web Share API / copy-to-clipboard text, no image generation) in scope for v1, or explicitly deferred? — owner: Ashwin, target resolution: start of Phase 3.
-- [ ] Multi-tab behavior (two tabs playing simultaneously writing to the same `localStorage` key) — acceptable as a known, low-priority edge case, or does it need a `storage` event listener to reconcile? — owner: Claude, target resolution: during Phase 2 `StorageService` implementation.
+All five questions below were open at end of Phase 1. Decisions, made 2026-07-09:
+
+- **Cloudflare zone**: confirmed via `cloudflared tunnel list`/`cert.pem` on this
+  machine — the account already holds active tunnels against
+  `ashwinsathian.com` for other projects, so the zone is live on Cloudflare.
+  Phase 4 adds a new `typester` tunnel + DNS route alongside them.
+- **Word source — live API with curated fallback, not purely bundled** (revises D5
+  below). Each round fetches candidate words at start from the **Datamuse
+  API** (`api.datamuse.com`) — free, keyless, CORS-enabled, no auth/quota wall
+  to manage. `core/services/word-source.service.ts` requests words per
+  difficulty tier (constrained by length + `md=f` frequency metadata so
+  common-word tiers stay easy), de-dupes, and validates the response before
+  handing a plain `string[]` to the pure `game-engine.ts`. A 2.5s
+  `AbortController` timeout plus any fetch/validation failure falls back to
+  the bundled `shared/data/word-bank.ts` curated list — this is what keeps the
+  installed PWA fully playable offline, not a nice-to-have.
+- **Stats granularity — per mode+difficulty+duration combination**, not one
+  global high score. More combinations to beat is more game-like and costs
+  little extra schema (`Record<string, BestScore>` keyed by config).
+- **Share affordance — in scope for v1.** Web Share API (`navigator.share`)
+  where available, clipboard-copy fallback otherwise. Composes a short result
+  string (score/WPM/mode) plus the app's own URL — no image generation, no
+  external image-rendering service.
+- **Multi-tab reconciliation — handled.** `StorageService` listens for the
+  `storage` window event and re-reads/merges best-scores so a second tab's
+  win isn't silently overwritten; last-write-wins for settings (acceptable —
+  settings aren't append-only data, unlike best scores).
+
+Additional decisions made in this pass (user-directed, not just Claude's call):
+
+- **More "game-like" scoring** (user-directed): streak-based combo
+  multiplier (every 5-correct streak bumps a score multiplier, capped),
+  occasional "power word" bonus-multiplier words, and a lightweight
+  achievement/badge set surfaced on Results — see DESIGN §Gamification.
+- **SSR reconsidered and re-confirmed as out of scope** (user asked for a
+  critical re-evaluation, not a default answer): the app has zero
+  per-request personalization — every screen's HTML is identical for every
+  visitor. Build-time prerendering (D2, unchanged) already gives crawlers
+  and first paint the full static HTML for Home/Help/Settings/legal routes;
+  a live `@angular/ssr` Express process would add a process to patch/monitor
+  for zero marginal SEO/perf benefit over prerendering, and would be the
+  single largest new piece of attack surface in the whole stack. Decision:
+  keep static-only output, and close the SEO gap this doc previously left
+  open with real `<meta>`/Open Graph/`sitemap.xml`/`robots.txt`/JSON-LD work
+  in Phase 3 (a prerendering-compatible, zero-server way to get the same
+  outcome) — see D2 addendum and Phase 3 tasks.
+
+## Note on live word source vs. "no third-party services"
+
+The RFC's Non-Goals still hold — no backend *we operate*, no accounts, no
+analytics/tracking scripts. The Datamuse API is a read-only, keyless, public
+GET endpoint the client calls directly (like a font CDN would be, except it
+isn't one — no persistent connection, no cookies, no tracking parameters).
+Because Phase 1 explicitly rejected a *shipped* runtime word/audio dependency
+(D5/D7) purely to preserve offline play, and this decision reinstates a live
+fetch, the offline guarantee now depends entirely on the fallback path
+actually working — this is why the fallback isn't optional and is covered by
+its own Playwright test (network offline → round still completable).
 
 ## 🗂 Appendix
 

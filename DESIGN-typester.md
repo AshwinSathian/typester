@@ -228,11 +228,41 @@ Each is a standalone Angular component, signal `input()`/`output()` only, no
 ### Results
 
 - `StatBadge` grid: Score, Time Bonus, Total, WPM, Accuracy. If the round
-  beat the stored best for this exact `mode+difficulty+duration` combination
-  (pending the RFC's open question on stats granularity), show a distinct
-  "New Best" `Toast`/badge treatment using `--ease-spring`.
-- Two actions: "Play Again" (same config, restarts immediately) and "Menu"
-  (ghost button, returns home).
+  beat the stored best for this exact `mode+difficulty+duration` combination,
+  show a distinct "New Best" `Toast`/badge treatment using `--ease-spring`.
+- Any achievement unlocked this round (see §Gamification) renders as a small
+  badge chip row beneath the stat grid — icon + label, no modal interruption.
+- Three actions: "Play Again" (same config, restarts immediately), "Share"
+  (see below), and "Menu" (ghost button, returns home).
+- **Share**: composes `"Scored {score} pts at {wpm} WPM on Typester ({mode}/
+  {difficulty}) — {url}"`. Calls `navigator.share()` when available (mobile
+  Safari/Chrome); falls back to `navigator.clipboard.writeText()` plus a
+  `Toast` ("Copied to clipboard") when the Web Share API isn't present
+  (most desktop browsers). No image/canvas rendering — text only, kept
+  simple and fast.
+
+## Gamification
+
+Layered on top of the base scoring in `game-engine.ts` — additive, not a
+replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
+
+- **Streak combo multiplier**: every 5 consecutive correct words bumps a
+  score multiplier (×1, ×1.5, ×2, capped at ×2) applied to subsequent words
+  until a mistake resets the streak to ×1. Mirrors the existing "combo
+  milestone" sound cue (§Sound) — same trigger, now with a scoring
+  consequence, not just audio.
+- **Power words**: roughly 1 in 8 words drawn during a round is flagged as a
+  power word — visually marked with a subtle glow/`--color-accent` underline
+  on the word display — worth double its tier's base points if typed
+  correctly. Selection is random per round, not predictable, so it can't be
+  gamed by memorizing a fixed pattern.
+- **Achievements**: a small fixed set (e.g. "First Round", "50 WPM Club",
+  "Perfect Accuracy", "10-Streak", "Every Difficulty Beaten") tracked in
+  `Stats` via `StorageService`, evaluated at round end, surfaced as badge
+  chips on Results the round they're first earned and listed (earned/locked)
+  on the Help or a dedicated Achievements panel. No points value of their
+  own — status only, so they can't be used to inflate the leaderboard-style
+  best-score numbers.
 
 ### Settings
 
