@@ -44,4 +44,19 @@ describe('StatBadge', () => {
     const value = fixture.nativeElement.querySelector('.app-stat-badge__value') as HTMLElement;
     expect(value.classList.contains('app-stat-badge__value--pop')).toBe(true);
   });
+
+  it('shows the final value with countUp enabled once the animation settles', () => {
+    @Component({
+      selector: 'app-test-count-up-host',
+      imports: [StatBadge],
+      template: `<app-stat-badge label="Total" [value]="405" [countUp]="true" />`,
+    })
+    class CountUpHost {}
+
+    const fixture = TestBed.createComponent(CountUpHost);
+    fixture.detectChanges();
+
+    const value = fixture.nativeElement.querySelector('.app-stat-badge__value') as HTMLElement;
+    expect(value.textContent?.trim()).toBe('405');
+  });
 });

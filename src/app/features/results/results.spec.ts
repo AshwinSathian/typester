@@ -60,6 +60,22 @@ describe('Results', () => {
     expect(fixture.nativeElement.querySelector('.results__badge')).toBeNull();
   });
 
+  it('renders a confetti burst only alongside the New Best badge', () => {
+    window.history.replaceState({ result: fixtureResult(), isNewBest: true }, '');
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelectorAll('.results__confetti-piece').length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('renders no confetti pieces when there is no New Best', () => {
+    window.history.replaceState({ result: fixtureResult(), isNewBest: false }, '');
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.results__confetti-piece').length).toBe(0);
+  });
+
   it('renders unlocked achievement badges', () => {
     window.history.replaceState(
       {

@@ -14,6 +14,28 @@ interface ResultsNavigationState {
   readonly isNewBest?: boolean;
 }
 
+interface ConfettiPiece {
+  readonly id: number;
+  readonly leftPercent: number;
+  readonly delayMs: number;
+  readonly durationMs: number;
+  readonly rotateDeg: number;
+  readonly energy: boolean;
+}
+
+const CONFETTI_PIECE_COUNT = 16;
+
+function buildConfetti(): ConfettiPiece[] {
+  return Array.from({ length: CONFETTI_PIECE_COUNT }, (_, i) => ({
+    id: i,
+    leftPercent: Math.round(Math.random() * 100),
+    delayMs: Math.round(Math.random() * 150),
+    durationMs: Math.round(700 + Math.random() * 400),
+    rotateDeg: Math.round(Math.random() * 360),
+    energy: i % 2 === 0,
+  }));
+}
+
 @Component({
   selector: 'app-results',
   imports: [Button, StatBadge, Toast],
@@ -31,6 +53,12 @@ export class Results {
   protected readonly result = signal<GameResult | null>(this.navState.result ?? null);
   protected readonly isNewBest = signal(this.navState.isNewBest ?? false);
   protected readonly toastMessage = signal<string | null>(null);
+
+  /** Generated once at construction, not reactively - a decorative one-shot
+   *  burst for a genuine "New Best" moment, not a recurring effect. */
+  protected readonly confettiPieces: readonly ConfettiPiece[] = this.isNewBest()
+    ? buildConfetti()
+    : [];
 
   protected readonly accuracyPercent = computed(() => {
     const result = this.result();

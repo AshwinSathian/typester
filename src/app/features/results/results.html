@@ -1,21 +1,39 @@
 @if (result(); as result) {
   <main id="main-content" class="results">
     @if (isNewBest()) {
-      <p class="results__badge">New Best</p>
+      <p class="results__badge">
+        New Best
+        <span class="results__confetti" aria-hidden="true">
+          @for (piece of confettiPieces; track piece.id) {
+            <span
+              class="results__confetti-piece"
+              [class.results__confetti-piece--energy]="piece.energy"
+              [style.left.%]="piece.leftPercent"
+              [style.--delay.ms]="piece.delayMs"
+              [style.--duration.ms]="piece.durationMs"
+              [style.--rotate.deg]="piece.rotateDeg"
+            ></span>
+          }
+        </span>
+      </p>
     }
 
     <div class="results__grid">
-      <app-stat-badge label="Score" [value]="result.baseScore" />
-      <app-stat-badge label="Time Bonus" [value]="result.timeBonus" />
-      <app-stat-badge label="Total" [value]="result.totalScore" />
-      <app-stat-badge label="WPM" [value]="result.wpm" />
-      <app-stat-badge label="Accuracy" [value]="accuracyPercent()" suffix="%" />
+      <app-stat-badge label="Score" [value]="result.baseScore" [countUp]="true" />
+      <app-stat-badge label="Time Bonus" [value]="result.timeBonus" [countUp]="true" />
+      <app-stat-badge label="Total" [value]="result.totalScore" [countUp]="true" />
+      <app-stat-badge label="WPM" [value]="result.wpm" [countUp]="true" />
+      <app-stat-badge label="Accuracy" [value]="accuracyPercent()" suffix="%" [countUp]="true" />
     </div>
 
     @if (unlockedAchievements().length > 0) {
       <div class="results__achievements">
-        @for (achievement of unlockedAchievements(); track achievement.id) {
-          <span class="results__achievement" [title]="achievement.description">
+        @for (achievement of unlockedAchievements(); track achievement.id; let i = $index) {
+          <span
+            class="results__achievement"
+            [title]="achievement.description"
+            [style.animation-delay.ms]="i * 70"
+          >
             {{ achievement.title }}
           </span>
         }
