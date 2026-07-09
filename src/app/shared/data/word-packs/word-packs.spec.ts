@@ -4,7 +4,7 @@ import { findWordPack, WORD_PACKS } from './index';
 const MIN_WORDS_PER_TIER = 15;
 
 describe('WORD_PACKS', () => {
-  it('ships at least 4 packs, per PLAN-typester-growth.md Phase 8', () => {
+  it('ships at least 4 packs', () => {
     expect(WORD_PACKS.length).toBeGreaterThanOrEqual(4);
   });
 

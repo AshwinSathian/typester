@@ -1,10 +1,9 @@
 /**
  * Pure TypeScript daily-challenge helpers - zero Angular imports (see
- * ARCHITECTURE.md §D4, PLAN-typester-growth.md architecture table). Derives
- * a deterministic seed from a UTC calendar date so every player gets
- * byte-identical word order for "today", feeding the same injectable `rng`
- * parameter `buildRoundWords()` already accepts - this is a drop-in
- * extension point, not new engine architecture.
+ * ARCHITECTURE.md §D4). Derives a deterministic seed from a UTC calendar
+ * date so every player gets byte-identical word order for "today", feeding
+ * the same injectable `rng` parameter `buildRoundWords()` already accepts -
+ * this is a drop-in extension point, not new engine architecture.
  */
 import { DailyChallenge } from '../models/daily-challenge';
 import { GameConfig } from '../models/game-config';
@@ -19,7 +18,7 @@ export const DAILY_CHALLENGE_CONFIG: GameConfig = {
 };
 
 /** The date "Typester Daily #1" launched - everything before this has no
- *  day number. Chosen as this RFC's own creation date. */
+ *  day number. */
 export const DAILY_CHALLENGE_EPOCH = '2026-07-09';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

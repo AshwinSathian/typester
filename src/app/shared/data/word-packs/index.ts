@@ -5,8 +5,8 @@ import { SCIENCE_PACK } from './science';
 import { TECH_PROGRAMMING_PACK } from './tech-programming';
 
 /** Themed alternative word sources for Timed/Endless mode - bundled, no
- *  runtime fetch, opt-in via Home's "Word Pack" picker (PLAN-typester-growth.md
- *  Phase 8). Quick Play keeps its fixed legacy composition untouched. */
+ *  runtime fetch, opt-in via Home's "Word Pack" picker. Quick Play keeps
+ *  its fixed legacy composition untouched. */
 export const WORD_PACKS: readonly WordPack[] = [
   MOVIES_TV_PACK,
   TECH_PROGRAMMING_PACK,

@@ -87,9 +87,8 @@ function daysBeforeIso(iso: string, days: number): string {
 }
 
 /** Awards one freeze token every time the streak crosses a multiple of 7 -
- *  scarce and earned by design, never unlimited (PLAN-typester-growth.md
- *  §Risks: an unlimited freeze removes the loss aversion the mechanic
- *  exists to create). */
+ *  scarce and earned by design, never unlimited, so it doesn't remove the
+ *  loss aversion the streak mechanic exists to create. */
 function awardFreezeIfEarned(freezeCount: number, dayStreak: number): number {
   return dayStreak > 0 && dayStreak % 7 === 0 ? freezeCount + 1 : freezeCount;
 }
@@ -223,7 +222,7 @@ export class StorageService {
    * words typed, achievements), but the score writes into its own
    * dailyResults[date] bucket, never bestScores - a daily-challenge result
    * never competes with (or gets conflated with) a manually-picked config's
-   * best score (PLAN-typester-growth.md Phase 6).
+   * best score.
    */
   recordDailyResult(challenge: DailyChallenge, result: GameResult): RecordResultOutcome {
     const prior = this.stats();

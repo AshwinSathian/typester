@@ -121,7 +121,7 @@
   /* Background texture - a faint dot grid in light mode, replaced by a
      scanline texture in dark mode (see :root[data-theme='dark'] below) so
      dark mode has a genuinely distinct identity rather than being a pure
-     lightness inversion (DESIGN-typester-growth.md §Dark mode personality). */
+     lightness inversion. */
   --bg-texture-image: radial-gradient(
     circle at 1px 1px,
     color-mix(in oklch, var(--color-border) 70%, transparent) 1px,

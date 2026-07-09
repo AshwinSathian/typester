@@ -90,10 +90,9 @@
 
 /* Locked achievements are visibly locked (a muted fill, dashed border, and a
    lock glyph), not just "already there but grey" - the full possibility
-   space is legible before it's earned (DESIGN §Stats/Progress screen).
-   Deliberately not opacity-faded: fading --color-text-muted further would
-   drop its contrast below WCAG AA (axe caught this in Phase 8's first
-   pass) - the muted token is already the "recede" signal on its own. */
+   space is legible before it's earned. Deliberately not opacity-faded:
+   fading --color-text-muted further drops its contrast below WCAG AA - the
+   muted token is already the "recede" signal on its own. */
 .stats__achievement {
   display: inline-flex;
   align-items: center;

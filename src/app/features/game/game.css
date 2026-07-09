@@ -102,7 +102,7 @@
 
 /* Endless/Survival's word-difficulty escalation is made visually legible
    via the glow intensifying as the round progresses (--progress, 0..1),
-   not a numeric "level" counter (DESIGN §Endless/Survival mode). */
+   not a numeric "level" counter. */
 .game__spotlight--escalating::before {
   background: radial-gradient(
     circle,
@@ -112,7 +112,7 @@
 }
 
 /* Word look-ahead queue: current word is the product, the next 1-2 words
-   are visually receded (DESIGN §Game screen additions). */
+   are visually receded. */
 .game__word-strip {
   display: flex;
   align-items: baseline;

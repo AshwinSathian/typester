@@ -112,14 +112,13 @@ export class Game implements OnInit {
   protected readonly isDaily = computed(() => !!this.date());
   protected readonly isEndless = computed(() => this.config().mode === 'endless');
   /** One entry per starting life, for the Endless/Survival lives-remaining
-   *  dot row (DESIGN §Endless/Survival mode visual treatment). */
+   *  dot row. */
   protected readonly livesDots = computed(() =>
     this.isEndless() ? Array.from({ length: this.config().durationSeconds }, (_, i) => i) : [],
   );
 
   /** Endless/Survival's word-difficulty escalation is made visually legible
-   *  via the spotlight glow intensifying (DESIGN §Endless/Survival mode
-   *  visual treatment), not a numeric level counter. */
+   *  via the spotlight glow intensifying, not a numeric level counter. */
   protected readonly roundProgress = computed(() => {
     const snap = this.snapshot();
     return snap && snap.totalWords > 0 ? snap.wordIndex / snap.totalWords : 0;
@@ -259,12 +258,11 @@ export class Game implements OnInit {
     this.elapsedMs.set(nowMs - this.startedAtMs);
     this.showFeedback(outcome.correct ? 'correct' : outcome.nearMiss ? 'near' : 'incorrect');
 
-    // The input clears on every submission, correct or not - an incorrect
-    // guess used to leave stray characters behind, forcing a manual clear
-    // before retrying (PLAN-typester-growth.md Executive Diagnosis #8). The
-    // per-character diff still reads correctly afterwards because it's
-    // driven by the `typedValue` signal, which only updates on the next
-    // keystroke via onInput(), not by this DOM clear.
+    // The input clears on every submission, correct or not, so an incorrect
+    // guess never leaves stray characters behind forcing a manual clear
+    // before retrying. The per-character diff still reads correctly
+    // afterwards because it's driven by the `typedValue` signal, which only
+    // updates on the next keystroke via onInput(), not by this DOM clear.
     inputEl.value = '';
     if (outcome.correct) {
       this.typedValue.set('');
@@ -325,10 +323,9 @@ export class Game implements OnInit {
 
     const difficulty = config.difficulty as Difficulty;
 
-    // A themed word pack is bundled, curated content - it bypasses the
-    // live Datamuse fetch entirely, the same way the daily challenge does
-    // (PLAN-typester-growth.md Phase 8: "authored the same way as
-    // word-bank.ts - bundled, no runtime fetch dependency").
+    // A themed word pack is bundled, curated content, authored the same way
+    // as word-bank.ts - it bypasses the live Datamuse fetch entirely, the
+    // same way the daily challenge does.
     const pack = findWordPack(this.pack());
     const words = pack ? pack.words[difficulty] : await this.wordSource.getWords(difficulty);
     return {

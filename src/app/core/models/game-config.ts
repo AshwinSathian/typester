@@ -41,11 +41,20 @@ const VALID_DIFFICULTIES = new Set<string>(['easy', 'medium', 'hard']);
 const VALID_DURATIONS = new Set<number>(GAME_DURATIONS);
 const VALID_ENDLESS_LIVES = new Set<number>(ENDLESS_MISTAKE_OPTIONS);
 
+/** Matches the min/max enforced on the Quick Play duration field in Settings. */
+const QUICK_PLAY_DURATION_MIN_SECONDS = 15;
+const QUICK_PLAY_DURATION_MAX_SECONDS = 300;
+
 export function isValidGameConfig(mode: string, difficulty: string, duration: string): boolean {
   const durationNum = Number(duration);
 
   if (mode === 'quick') {
-    return difficulty === 'mixed' && durationNum === QUICK_PLAY_DURATION_SECONDS;
+    return (
+      difficulty === 'mixed' &&
+      Number.isInteger(durationNum) &&
+      durationNum >= QUICK_PLAY_DURATION_MIN_SECONDS &&
+      durationNum <= QUICK_PLAY_DURATION_MAX_SECONDS
+    );
   }
 
   if (mode === 'timed') {
@@ -67,7 +76,7 @@ export interface ComboDescriptor {
 
 /** The fixed 10-combo set (1 Quick Play + 3 difficulties × 3 durations) the
  *  Stats screen's best-scores grid and Results' next-combo cross-promotion
- *  both iterate (PLAN-typester-growth.md Phase 7). */
+ *  both iterate. */
 export function allGameCombos(): readonly ComboDescriptor[] {
   const quick: GameConfig = {
     mode: 'quick',
@@ -93,8 +102,7 @@ export function allGameCombos(): readonly ComboDescriptor[] {
  * The next not-yet-beaten combo after `current` in the fixed 10-combo
  * order (wrapping around), for Results' cross-promotion action. Returns
  * null once every combo already has a best score - never suggests one
- * already beaten (DESIGN §Results screen rework: Next-combo
- * cross-promotion).
+ * already beaten.
  */
 export function nextUnbeatenCombo(stats: Stats, current: GameConfig): ComboDescriptor | null {
   const combos = allGameCombos();

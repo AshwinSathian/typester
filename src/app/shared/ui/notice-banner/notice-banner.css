@@ -1,8 +1,8 @@
 /* An in-flow top bar, not a `position: fixed` overlay (see notice-banner.ts
    for why) - it pushes page content down while visible and disappears for
    good, space and all, the instant it's dismissed. Never reserves layout
-   space permanently (PLAN-typester-growth.md Phase 5) and never covers -
-   or intercepts clicks on - anything else on the page. */
+   space permanently and never covers - or intercepts clicks on - anything
+   else on the page. */
 .app-notice-banner {
   position: sticky;
   top: 0;

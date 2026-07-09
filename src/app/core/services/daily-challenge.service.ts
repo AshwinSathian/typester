@@ -34,9 +34,7 @@ export class DailyChallengeService {
    * Always draws from the bundled WORD_BANK, never WordSourceService's live
    * Datamuse fetch - true player-to-player comparability requires every
    * player to draw from the same fixed candidate pool, not just apply the
-   * same shuffle to two different pools (PLAN-typester-growth.md Executive
-   * Diagnosis #4: a per-round live fetch is what made "same config, same
-   * words" impossible in the first place).
+   * same shuffle to two different pools.
    */
   buildWords(challenge: DailyChallenge): readonly WordEntry[] {
     const difficulty = challenge.config.difficulty as keyof WordPools;

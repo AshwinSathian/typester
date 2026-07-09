@@ -47,31 +47,67 @@ outbound connection to Cloudflare's edge, and Caddy only listens on
 
 ```
 src/app/
-  core/       singleton services, functional guards, shared models
-  features/   home, game, results, settings, help, legal — one folder per route
+  core/
+    guards/     gameConfigGuard, dailyChallengeGuard — validate route params
+    models/     GameConfig, Stats, Achievement, DailyChallenge, ChallengeLink, WordPack, ...
+    services/   game-engine (pure), daily-challenge (pure), storage, sound,
+                word-source, share, share-card, challenge-link
+  features/     home, game, results, stats, settings, help, legal —
+                one lazy-loaded folder per route
   shared/
-    ui/       presentational design-system primitives
-    data/     bundled word bank (offline fallback)
-e2e/          Playwright specs (flows + axe accessibility)
-ops/          Caddyfile, cloudflared config, launchd services, deploy script
+    ui/         presentational design-system primitives
+    data/       bundled word bank (offline fallback) + themed word packs
+e2e/            Playwright specs (flows + axe accessibility)
+ops/            Caddyfile, cloudflared config, launchd services, deploy script
 ```
+
+## Routes
+
+```
+/                              Home
+/play/:mode/:difficulty/:duration   Game — gameConfigGuard validates the triple
+/play/daily/:date              Game — dailyChallengeGuard validates the date
+/results                       Results — reads a GameResult from router state, not a param
+/stats                         Stats
+/settings, /help               Settings, Help
+/privacy, /terms, /license     Legal pages
+```
+
+`mode` is `quick | timed | endless`; for `timed`/`endless`, `difficulty` is
+`easy | medium | hard` and `duration` is seconds (`30/60/120`) or, for
+`endless`, mistakes-allowed ("lives", `3/5/10`). For `quick`, `difficulty`
+is always `mixed` and `duration` is the player's configured Quick Play
+duration (15–300s, default 90 — see `isValidGameConfig` in
+`core/models/game-config.ts`; this range must stay in sync with the
+min/max enforced on the Quick Play field in Settings).
 
 ## Data flow: a single round
 
 ```
-Home (pick mode/difficulty/duration)
-  → router navigates to /play/:mode/:difficulty/:duration
+Home (pick mode/difficulty/duration, optionally a word pack)
+  → router navigates to /play/:mode/:difficulty/:duration[?pack=id]
   → game-config.guard validates params (invalid → redirect home)
   → Game feature reads route params (signal-based input via withComponentInputBinding)
   → game-engine.ts owns session state (idle → playing → finished) as signals
-  → each correct/incorrect submission updates score/combo signals; SoundService fires a cue
-  → on finish, GameResult is written via StorageService (best score/stats) and
-    the router navigates to /results with the result passed via router state
+  → each correct/incorrect/near-miss submission updates score/streak/combo
+    signals; SoundService fires a cue
+  → on finish, GameResult is written via StorageService (best score/stats/
+    achievements/day streak) and the router navigates to /results with the
+    result passed via router state
 ```
 
 Game configuration lives **in the URL**, not in a mutable shared-service
 boolean — directly fixing legacy defect #2. `/play/easy/2` is shareable,
 bookmarkable, and refresh-safe.
+
+The daily challenge (`/play/daily/:date`) and word packs are variants of
+this same flow: the daily challenge always uses a config fixed by
+`DAILY_CHALLENGE_CONFIG` and a word list seeded deterministically from the
+UTC date (bundled word bank only, never the live fetch) so every player
+sees the same words; a word pack, when selected, substitutes a bundled
+curated list for the live fetch on Timed/Endless rounds. Results from a
+daily challenge write into `Stats.dailyResults`, a separate bucket from the
+regular `Stats.bestScores` table.
 
 ## Key decisions
 
@@ -118,9 +154,9 @@ decisions — color, type, spacing, motion — live in
 by Tailwind's `@theme`. No Bootstrap/Material/PrimeNG.
 
 **D7 — Synthesized sound via Web Audio API, no shipped audio assets.**
-`core/services/sound.service.ts` synthesizes correct/incorrect/combo/
-game-over cues as short tones. Avoids audio-asset licensing questions and
-keeps the bundle small.
+`core/services/sound.service.ts` synthesizes correct/near-miss/incorrect/
+combo/time-up cues as short tones. Avoids audio-asset licensing questions
+and keeps the bundle small.
 
 **D8 — `localStorage` via a versioned `StorageService`, not IndexedDB.**
 Settings, best scores, and stats are small key-value data. Schema is
@@ -142,21 +178,55 @@ Angular 22's CLI requires Node ≥22.22.3/≥24.15.0/≥26.0.0. Pinned to this
 repo via `.nvmrc` (`nvm use` picks it up) without touching this machine's
 global `nvm` default, which other projects still rely on.
 
+**D12 — Daily challenge: deterministic per-date seed, bundled words only.**
+`core/services/daily-challenge.ts` derives a seed from the UTC calendar
+date and feeds it through a seeded PRNG into the same `buildRoundWords`
+draw the rest of the app uses — always against the bundled word bank, never
+`WordSourceService`'s live fetch. True player-to-player comparability
+needs every player drawing from the same fixed candidate pool with the
+same shuffle, which a per-round live fetch structurally can't guarantee.
+
+**D13 — Share card: client-side `<canvas>` rasterization, no rendering
+service.** `core/services/share-card.service.ts` draws a themed PNG at
+share time — no server round-trip, no third-party image API. `ShareService`
+remains the plain-text/clipboard fallback for platforms that can't share
+files; the two compose in `Results.shareResult()` rather than one replacing
+the other.
+
+**D14 — Challenge links and daily-challenge results are self-reported and
+unverifiable, and that's an accepted limitation, not a bug to fix later.**
+There's no backend (D1's scope holds), so a challenge link's encoded
+score/WPM can't be verified server-side. Copy never calls it a
+"leaderboard" or "verified" — a client-only trick doesn't get to pretend to
+be a server-backed guarantee.
+
 ## Testing strategy
 
 - **Unit (Vitest)**: `game-engine.ts` (draw-without-replacement, scoring,
-  streak combo, WPM/accuracy formulas, every state-machine transition),
-  `storage.service.ts` (defaults, round-trip, corrupted-data fallback),
-  `sound.service.ts` (no-throw without `AudioContext`), word bank data
-  integrity (uniqueness, character set).
+  streak combo, power words, near-miss detection, escalating difficulty,
+  every state-machine transition), `daily-challenge.ts`/
+  `daily-challenge.service.ts` (deterministic seeding, epoch/date
+  validation), `challenge-link.ts` (encode/decode round-trip, rejection of
+  malformed params), `game-config.guard.ts`/`game-config.ts` (valid-route
+  rules for every mode), `storage.service.ts` (defaults, round-trip,
+  corrupted-data fallback, day-streak/freeze bookkeeping), `sound.service.ts`
+  (no-throw without `AudioContext`), `share-card.service.ts` (no-throw
+  without canvas support), word bank and word pack data integrity
+  (uniqueness, character set, length bands per difficulty tier).
 - **Component (Vitest + Angular testing utilities)**: typing input
   auto-focus/auto-clear/Enter-to-submit behavior, results screen derived
-  numbers from a fixture, settings form persistence.
+  numbers from a fixture, settings form persistence, notice banner
+  dismiss/persist behavior.
 - **E2E (Playwright — Chromium, WebKit, a mobile viewport)**: keyboard-only
-  Quick Play run start to finish, Game Modes flow, settings persist across a
-  reload, light/dark toggle applies without a flash of unstyled content.
+  Quick Play run start to finish, Game Modes flow, Endless mode, exit-and-
+  resume/discard flow, the daily challenge, challenge links, settings
+  persist across a reload, keyboard navigation, the notice banner's
+  in-flow (never-covering) behavior, light/dark toggle applies without a
+  flash of unstyled content.
 - **Accessibility (`@axe-core/playwright`)**: 0 serious/critical violations,
-  both themes, across public routes.
+  both themes, across Home (including the challenge-link landing state),
+  Help, Settings, Stats, the legal pages, and the daily-challenge Game
+  route.
 
 ## Known limitations
 
@@ -172,3 +242,8 @@ global `nvm` default, which other projects still rely on.
   fallback path, not the primary word source.
 - **English only.** The word bank and all copy assume English; no
   internationalization.
+- **Results isn't covered by an automated axe scan.** It's reached via
+  router state rather than a directly-navigable route, so
+  `e2e/accessibility.spec.ts` can't deep-link to it the way it does every
+  other screen. It follows the same design-system rules as every other
+  screen, just without a dedicated automated check yet.

@@ -24,8 +24,7 @@ export interface SessionSnapshot {
   readonly state: SessionState;
   readonly currentWord: WordEntry | null;
   /** The next 1-2 words after currentWord, for the Game screen's word
-   *  look-ahead queue (DESIGN §Game screen additions) - never more than
-   *  what's actually left in the round. */
+   *  look-ahead queue - never more than what's actually left in the round. */
   readonly upcomingWords: readonly WordEntry[];
   readonly wordIndex: number;
   readonly totalWords: number;
@@ -47,8 +46,8 @@ export interface SessionSnapshot {
 export interface SubmitOutcome {
   readonly correct: boolean;
   /** A single-character-edit typo on an otherwise-incorrect submission - a
-   *  feedback distinction only, not scoring leniency (see near-miss risk
-   *  note in PLAN-typester-growth.md §Risks: the streak still resets). */
+   *  feedback distinction only, not scoring leniency; the streak still
+   *  resets on a near miss exactly as it does on a full miss. */
   readonly nearMiss: boolean;
   readonly finished: boolean;
   readonly snapshot: SessionSnapshot;
@@ -127,9 +126,8 @@ function withPowerWords(words: readonly WordEntry[], rng: () => number): WordEnt
  * This is a static per-round escalation, not a live reaction to the
  * player's current streak - GameSession's word list is built once, upfront,
  * before a session (and therefore a streak) exists to react to. Extending
- * `buildRoundWords` this way is the practical, lower-risk reading of
- * "escalating in-round difficulty" that doesn't require reworking
- * GameSession's tested draw-once contract (PLAN-typester-growth.md Phase 8).
+ * `buildRoundWords` this way avoids reworking GameSession's tested
+ * draw-once contract.
  */
 export function escalateByLength(words: readonly WordEntry[]): WordEntry[] {
   if (words.length <= 1) return [...words];
@@ -358,8 +356,7 @@ export function evaluateAchievements(
 }
 
 /** A single not-yet-unlocked achievement's numeric gap, for the Results
- *  screen's "closest miss" line (DESIGN §Results screen rework:
- *  Progress-toward-next-badge). */
+ *  screen's "closest miss" line. */
 export interface AchievementProgress {
   readonly id: AchievementId;
   readonly label: string;

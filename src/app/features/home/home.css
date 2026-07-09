@@ -57,9 +57,9 @@
 }
 
 /* Auto-typing hero preview - a first-time visitor sees what the mechanic
-   looks like before clicking anything (DESIGN §Home screen additions).
-   Purely decorative (aria-hidden); the static sr-only paragraph right
-   after it carries the same meaning for screen readers. */
+   looks like before clicking anything. Purely decorative (aria-hidden); the
+   static sr-only paragraph right after it carries the same meaning for
+   screen readers. */
 .home__preview {
   display: flex;
   align-items: baseline;
@@ -150,9 +150,9 @@
   }
 }
 
-/* Challenge-link landing state (DESIGN §Home screen additions) - replaces
-   the standard hero entirely when Home is opened via a shared "beat my
-   score" link. A landing-state override, not a persistent app mode. */
+/* Challenge-link landing state - replaces the standard hero entirely when
+   Home is opened via a shared "beat my score" link. A landing-state
+   override, not a persistent app mode. */
 .home__challenge {
   display: flex;
   flex-direction: column;
@@ -172,8 +172,7 @@
 }
 
 /* Day-streak "at risk" / "freeze will cover" banner - an in-flow card, not
-   the fixed bottom bar NoticeBanner used to be (that pattern was removed in
-   Phase 5). */
+   a fixed bottom bar. */
 .home__streak-banner {
   display: flex;
   flex-direction: column;

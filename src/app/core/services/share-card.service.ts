@@ -11,8 +11,8 @@ export interface ShareCardInput {
 
 const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
-/** Bestreak dots cap at the x2 multiplier threshold - enough visual texture
- *  to be recognizable at a glance, not a full chart (DESIGN §Share card). */
+/** Best-streak dots cap at the x2 multiplier threshold - enough visual
+ *  texture to be recognizable at a glance, not a full chart. */
 const MAX_STREAK_DOTS = 10;
 
 function capitalize(value: string): string {
@@ -21,10 +21,9 @@ function capitalize(value: string): string {
 
 /**
  * Client-side <canvas> rasterization of a shareable result PNG - no
- * server-side rendering, no third-party image API (ARCHITECTURE.md: the
- * rejection is of a *service* dependency, not of client-side canvas use).
- * Reads the current theme's design tokens so the card matches whatever the
- * player is actually looking at.
+ * server-side rendering, no third-party image API. Reads the current
+ * theme's design tokens so the card matches whatever the player is
+ * actually looking at.
  */
 @Injectable({ providedIn: 'root' })
 export class ShareCardService {
@@ -95,7 +94,7 @@ export class ShareCardService {
     this.paintStreakDots(ctx, result.bestStreak, energy, border, 72, 440);
 
     // Wordmark, bottom-right corner - the one existing piece of custom
-    // identity, reused here per DESIGN §Share card.
+    // identity, reused here.
     ctx.fillStyle = textColor;
     ctx.font = '700 40px "JetBrains Mono Variable", "JetBrains Mono", monospace';
     const wordmark = 'T';
@@ -114,7 +113,7 @@ export class ShareCardService {
 
     if (isDark) {
       // Faint horizontal scanlines - matches the dark-theme background
-      // texture used app-wide (DESIGN §Dark mode personality).
+      // texture used app-wide.
       for (let y = 0; y < CARD_HEIGHT; y += 4) {
         ctx.fillRect(0, y, CARD_WIDTH, 1);
       }

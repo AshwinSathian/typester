@@ -24,6 +24,21 @@ describe('gameConfigGuard', () => {
     expect(runGuard({ mode: 'quick', difficulty: 'mixed', duration: '90' })).toBe(true);
   });
 
+  it('allows a quick play route with a user-customized duration (15-300s)', () => {
+    expect(runGuard({ mode: 'quick', difficulty: 'mixed', duration: '15' })).toBe(true);
+    expect(runGuard({ mode: 'quick', difficulty: 'mixed', duration: '300' })).toBe(true);
+    expect(runGuard({ mode: 'quick', difficulty: 'mixed', duration: '150' })).toBe(true);
+  });
+
+  it('redirects home on a quick play duration outside the 15-300s range', () => {
+    expect(runGuard({ mode: 'quick', difficulty: 'mixed', duration: '14' })).toBeInstanceOf(
+      UrlTree,
+    );
+    expect(runGuard({ mode: 'quick', difficulty: 'mixed', duration: '301' })).toBeInstanceOf(
+      UrlTree,
+    );
+  });
+
   it('allows a valid timed route for every difficulty/duration combination', () => {
     for (const difficulty of ['easy', 'medium', 'hard']) {
       for (const duration of ['30', '60', '120']) {

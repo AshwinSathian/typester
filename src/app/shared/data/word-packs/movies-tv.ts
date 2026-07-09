@@ -1,7 +1,7 @@
 import { WordPack } from '../../../core/models/word-pack';
 
 /** Curated the same way as shared/data/word-bank.ts - bundled, no runtime
- *  fetch dependency (PLAN-typester-growth.md Phase 8). */
+ *  fetch dependency. */
 export const MOVIES_TV_PACK: WordPack = {
   id: 'movies-tv',
   label: 'Movies & TV',

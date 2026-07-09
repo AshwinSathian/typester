@@ -12,7 +12,7 @@ test('the notice banner never covers the last interactive element, and leaves no
   // An in-flow banner can only ever push content down, never cover it -
   // this used to fail when the banner was a `position: fixed` overlay,
   // which occupied the same screen region as the page's last button
-  // regardless of scroll (PLAN-typester-growth.md Phase 5).
+  // regardless of scroll.
   await page.getByRole('button', { name: 'Back to Menu' }).click();
   await page.waitForURL('**/');
 

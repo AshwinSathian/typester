@@ -21,8 +21,8 @@ export interface Stats {
   readonly bestScores: Readonly<Record<string, BestScoreEntry>>;
   /**
    * Keyed by UTC `YYYY-MM-DD` — deliberately never the same bucket as
-   * bestScores (PLAN-typester-growth.md Phase 6: a daily-challenge result
-   * needs its own distinct, collectible identity).
+   * bestScores; a daily-challenge result has its own distinct, collectible
+   * identity.
    */
   readonly dailyResults: Readonly<Record<string, DailyResultEntry>>;
   readonly achievementsUnlocked: readonly AchievementId[];
@@ -53,8 +53,7 @@ export type StreakStatus = 'none' | 'safe' | 'at-risk' | 'freeze-will-cover';
 
 /**
  * Pure classification of "how urgent is it to play today" for the Home
- * screen's streak banner (PLAN-typester-growth.md Phase 7 / DESIGN §Home
- * screen additions — Day-streak "at risk" banner).
+ * screen's streak banner.
  */
 export function streakStatus(stats: Stats, todayUtc: string): StreakStatus {
   if (stats.dayStreak <= 0 || !stats.lastPlayedDate) return 'none';

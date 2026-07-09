@@ -2,7 +2,7 @@
  * Pure TypeScript challenge-link encode/decode - zero Angular imports. A
  * non-daily GameConfig + the score/WPM that beat it, packed into plain
  * query params so a fresh session landing on Home can render a distinct
- * "beat it?" state (PLAN-typester-growth.md Phase 6).
+ * "beat it?" state.
  */
 import { ChallengeLinkPayload } from '../models/challenge-link';
 import { GameConfig, GameMode, RouteDifficulty, isValidGameConfig } from '../models/game-config';
