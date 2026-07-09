@@ -1,0 +1,14 @@
+<main id="main-content" class="help">
+  <h1 class="help__title">Help &amp; FAQ</h1>
+
+  <div class="help__list">
+    @for (item of faqs; track item.question) {
+      <details class="help__item">
+        <summary class="help__question">{{ item.question }}</summary>
+        <p class="help__answer">{{ item.answer }}</p>
+      </details>
+    }
+  </div>
+
+  <app-button variant="ghost" [fullWidth]="true" (pressed)="goToMenu()">Back to Menu</app-button>
+</main>

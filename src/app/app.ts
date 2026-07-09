@@ -1,18 +1,19 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, effect, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { StorageService } from './core/services/storage.service';
+import { NoticeBanner } from './shared/ui/notice-banner/notice-banner';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, NoticeBanner, RouterLink],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
   private readonly document = inject(DOCUMENT);
-  private readonly storage = inject(StorageService);
+  protected readonly storage = inject(StorageService);
 
   constructor() {
     effect(() => {
@@ -31,5 +32,9 @@ export class App {
         root.setAttribute('data-motion', motion === 'reduced' ? 'reduced' : 'full');
       }
     });
+  }
+
+  dismissNotice(): void {
+    this.storage.updateSettings({ localStorageNoticeDismissed: true });
   }
 }

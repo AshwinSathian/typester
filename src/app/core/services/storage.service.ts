@@ -30,7 +30,8 @@ function isSettings(value: unknown): value is Settings {
     MOTIONS.includes(v['motion'] as MotionPreference) &&
     typeof v['quickPlayDurationSeconds'] === 'number' &&
     v['quickPlayDurationSeconds'] >= 15 &&
-    v['quickPlayDurationSeconds'] <= 300
+    v['quickPlayDurationSeconds'] <= 300 &&
+    typeof v['localStorageNoticeDismissed'] === 'boolean'
   );
 }
 
