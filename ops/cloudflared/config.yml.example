@@ -1,0 +1,16 @@
+# Copy to ~/.cloudflared/config.yml and replace <TUNNEL_ID> after running:
+#   cloudflared tunnel login
+#   cloudflared tunnel create typester
+#   cloudflared tunnel route dns typester typester.ashwinsathian.com
+#
+# This binds the tunnel to Caddy on localhost only — cloudflared makes an
+# outbound-only connection to Cloudflare's edge, so no inbound port is ever
+# opened on this machine or the home network.
+
+tunnel: <TUNNEL_ID>
+credentials-file: /Users/ashwinsathian/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  - hostname: typester.ashwinsathian.com
+    service: http://localhost:8787
+  - service: http_status:404

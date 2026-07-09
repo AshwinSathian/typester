@@ -1,0 +1,39 @@
+## Typester static site — served locally, fronted by a Cloudflare Tunnel.
+## Caddy terminates plain HTTP on localhost only; Cloudflare Tunnel handles the
+## public TLS edge, so Caddy does not need (and must not open) a public port.
+
+localhost:8787 {
+	root * {$TYPESTER_RELEASE:/opt/typester/releases/current}/browser
+	encode zstd gzip
+	file_server
+
+	# SPA fallback: unknown paths resolve to index.html so Angular's router
+	# (client-side navigation for /play/*, /results, etc.) can take over.
+	try_files {path} /index.html
+
+	# Defense-in-depth headers. Angular ships hashed, non-inline bundles, so a
+	# strict CSP with no 'unsafe-inline'/'unsafe-eval' is achievable.
+	header {
+		Content-Security-Policy "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; style-src 'self'; script-src 'self'"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	}
+
+	# Immutable, hashed build assets — safe to cache forever.
+	@hashed path *.js *.css
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	# index.html and the PWA manifest/service worker must always revalidate.
+	@revalidate path /index.html /manifest.webmanifest /ngsw.json /ngsw-worker.js
+	header @revalidate Cache-Control "no-cache"
+
+	log {
+		output file /opt/typester/logs/caddy-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
