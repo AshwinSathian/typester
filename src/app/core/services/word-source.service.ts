@@ -37,7 +37,7 @@ function exactLengthPattern(length: number): string {
  * Supplies fresh words for a round from the free, keyless Datamuse API,
  * constrained to each difficulty's length band, falling back to the bundled
  * word-bank.ts curated list on any failure - timeout, network error, or a
- * malformed/too-thin response (see PLAN-typester.md D5).
+ * malformed/too-thin response (see ARCHITECTURE.md §D5).
  */
 @Injectable({ providedIn: 'root' })
 export class WordSourceService {

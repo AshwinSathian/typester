@@ -21,7 +21,7 @@ interface WebkitWindow {
 
 /**
  * Every cue is synthesized via the Web Audio API - no shipped audio assets
- * (see PLAN-typester.md D7). Respects the soundEnabled setting, is silent
+ * (see ARCHITECTURE.md §D7). Respects the soundEnabled setting, is silent
  * while the tab is backgrounded (Page Visibility API), and never throws -
  * neither AudioContext availability nor synthesis failures should ever be
  * able to interrupt gameplay.

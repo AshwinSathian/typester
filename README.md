@@ -6,10 +6,9 @@ beat your best score.
 
 Live at [typester.ashwinsathian.com](https://typester.ashwinsathian.com).
 
-See [PLAN-typester.md](./PLAN-typester.md) for the full technical RFC
-(architecture, key decisions, phased task breakdown) and
-[DESIGN-typester.md](./DESIGN-typester.md) for the design system spec
-(tokens, components, screen-by-screen behavior).
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the technical architecture and
+key decisions, and [DESIGN-typester.md](./DESIGN-typester.md) for the design
+system spec (tokens, components, screen-by-screen behavior).
 
 ## Stack
 
@@ -43,7 +42,7 @@ npm run build
 ```
 
 Produces a fully static, prerendered site in `dist/typester/browser` — no
-Node server required at runtime (see PLAN §D2 for why).
+Node server required at runtime (see ARCHITECTURE.md §D2 for why).
 
 ## Deployment
 

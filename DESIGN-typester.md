@@ -1,10 +1,9 @@
 # Design: Typester
 
-> Companion to [PLAN-typester.md](./PLAN-typester.md) — implements Phase 3.
-> A note on provenance: the user asked for an "impeccable" design skill that
-> is not available in this environment. This document is the substitute —
-> concrete, opinionated, and specific enough that Phase 3's tasks have binary
-> acceptance criteria, rather than "make it look nice."
+> Companion to [ARCHITECTURE.md](./ARCHITECTURE.md). This is the living
+> design-system reference: tokens, components, and screen-by-screen behavior
+> — concrete and specific enough to hold every screen to a binary bar,
+> rather than "make it look nice."
 
 ## Design philosophy
 
@@ -25,8 +24,7 @@ satisfying, or get out of the way. Three rules:
 ## Tokens
 
 All tokens are CSS custom properties on `:root`, consumed directly by
-Tailwind v4's `@theme` (no hardcoded hex/px values anywhere else in the app —
-this is a Phase 3 acceptance criterion, not a guideline).
+Tailwind v4's `@theme` — no hardcoded hex/px values anywhere else in the app.
 
 ### Color — OKLCH, light + dark
 
@@ -76,7 +74,8 @@ via `StorageService`).
 
 **Contrast requirement (binary AC)**: `--color-text` on `--color-bg` and
 `--color-text` on `--color-surface` must both measure ≥4.5:1 (WCAG AA normal
-text) in both themes — verify with any contrast checker before Phase 3 exit.
+text) in both themes — verify with any contrast checker before shipping a
+token change.
 
 ### Typography
 
@@ -225,7 +224,7 @@ Each is a standalone Angular component, signal `input()`/`output()` only, no
   `--duration-instant`, `SoundService` fires the correct cue, next word
   appears immediately. Incorrect → same but `--color-danger`, and the
   mistyped characters within the input are underlined against the target
-  word (a Phase 3 stretch — see PLAN Open Questions if descoped).
+  word.
 - Score/streak changes are announced via a visually-hidden `aria-live="polite"`
   region so screen-reader users get the same instant feedback sighted users
   get from color/motion.
@@ -309,7 +308,7 @@ replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
 - Breakpoints follow Tailwind v4 defaults (`sm`/`md`/`lg`/`xl`) — no custom
   breakpoint scale needed.
 
-## Accessibility checklist (binary, verified in Phase 4)
+## Accessibility checklist (binary)
 
 - [ ] All interactive elements reachable and operable via keyboard alone, in
       a logical tab order, with no keyboard traps.
@@ -324,4 +323,6 @@ replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
       §Motion) — verified, not assumed.
 - [ ] Both themes pass 4.5:1 text contrast (§Color).
 - [ ] Zero serious/critical `axe-core` violations on every screen, both
-      themes (PLAN Phase 4 AC).
+      themes. `e2e/accessibility.spec.ts` currently covers Home, Help,
+      Settings, and the legal pages — Game and Results aren't route-static
+      enough to axe-scan the same way and need a targeted spec.

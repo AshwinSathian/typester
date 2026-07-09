@@ -5,7 +5,7 @@ export type ShareOutcome = 'shared' | 'copied' | 'failed';
 /**
  * Web Share API where available, clipboard-copy fallback otherwise - no
  * image generation, no third-party share/image-rendering service
- * (PLAN-typester.md §Open Questions - resolved: share feature).
+ * (ARCHITECTURE.md §Key decisions: share feature).
  */
 @Injectable({ providedIn: 'root' })
 export class ShareService {

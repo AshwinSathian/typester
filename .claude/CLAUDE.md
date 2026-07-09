@@ -57,19 +57,19 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 
 ## Project-specific conventions (Typester)
 
-Read [PLAN-typester.md](../PLAN-typester.md) and [DESIGN-typester.md](../DESIGN-typester.md)
-before implementing any feature — they contain the phase-by-phase task list,
-acceptance criteria, and full design-token/component spec this project holds
+Read [ARCHITECTURE.md](../ARCHITECTURE.md) and [DESIGN-typester.md](../DESIGN-typester.md)
+before implementing any feature — they contain the key architectural
+decisions and the full design-token/component spec this project holds
 itself to. In particular:
 
 - **No NgRx / no external state library.** All state is plain signal-based
-  services under `core/services`. Do not introduce `@ngrx/*` — the RFC
-  explicitly rejected it for this project's scope (see PLAN §D1).
+  services under `core/services`. Do not introduce `@ngrx/*` — rejected for
+  this project's scope (see ARCHITECTURE.md §D1).
 - **Game config lives in the route**, not in a shared mutable service. The
   route is `/play/:mode/:difficulty/:duration`; a functional guard in
   `core/guards` validates it. Never reintroduce a boolean-flag service
   (`accessGame`-style) to gate navigation — this was the legacy app's core
-  defect (PLAN §Background, defect #2).
+  defect (ARCHITECTURE.md §Background, defect #2).
 - **`core/services/game-engine.ts` must have zero Angular imports.** It is
   pure TypeScript, unit-tested with plain Vitest (no `TestBed`). Angular
   components/services wrap it reactively via signals — they do not
@@ -77,19 +77,20 @@ itself to. In particular:
 - **No DOM manipulation for the timer or any other reactive value.** The
   legacy app's `timer.component.ts` used `getElementById`/`setInterval`
   directly — replaced by `TimerRing`, driven entirely by a `computed()`
-  signal (PLAN §D4, DESIGN §Shared UI primitives).
+  signal (ARCHITECTURE.md §D4, DESIGN §Shared UI primitives).
 - **No third-party UI kit** (no Angular Material, PrimeNG, Bootstrap).
   Styling is Tailwind CSS v4 utility classes plus the CSS custom-property
   design tokens defined in `DESIGN-typester.md` §Tokens — every color/
   spacing/motion value must trace back to a token, never a hardcoded literal.
-- **No shipped audio or word-list assets fetched at runtime.** Sound is
-  synthesized via Web Audio API (`core/services/sound.service.ts`); the word
-  bank is a bundled static TS module (`shared/data/word-bank.ts`). Do not add
-  a runtime fetch to a dictionary/audio API — this was a deliberate RFC
-  decision (PLAN §D5, §D7) to keep the PWA fully offline-capable and avoid
-  any future paid-API dependency.
+- **Words: live Datamuse API fetch per round, bundled fallback.**
+  `word-source.service.ts` fetches candidate words from Datamuse at the
+  start of every round and falls back to the bundled
+  `shared/data/word-bank.ts` on timeout/failure — this is what keeps the
+  PWA playable offline (see ARCHITECTURE.md §D5). Sound stays synthesized
+  via Web Audio API (`core/services/sound.service.ts`, §D7) with no shipped
+  audio assets — do not add a runtime fetch for audio.
 - **Persistence is `localStorage` via `core/services/storage.service.ts`**,
   versioned and falling back to defaults on corrupted data — not IndexedDB
-  (PLAN §D8).
+  (ARCHITECTURE.md §D8).
 - Before adding any new runtime npm dependency, confirm it doesn't assume
   `zone.js` is present — this app is zoneless.

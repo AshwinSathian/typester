@@ -7,7 +7,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 /**
  * SVG circular countdown driven entirely by a computed() signal - no
  * setInterval DOM writes (fixes the legacy app's timer.component.ts, which
- * manipulated the DOM directly; see PLAN-typester.md D4).
+ * manipulated the DOM directly; see ARCHITECTURE.md §D4).
  */
 @Component({
   selector: 'app-timer-ring',

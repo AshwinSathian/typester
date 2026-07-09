@@ -1,5 +1,5 @@
 /**
- * Pure TypeScript game engine — zero Angular imports (see PLAN-typester.md D4).
+ * Pure TypeScript game engine — zero Angular imports (see ARCHITECTURE.md §D4).
  * Owns word selection, the idle -> playing -> finished session state machine,
  * scoring (combo multiplier + power words), WPM/accuracy, and achievement
  * evaluation. Angular components/services wrap this reactively via signals;
