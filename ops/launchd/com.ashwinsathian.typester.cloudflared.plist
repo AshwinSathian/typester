@@ -11,7 +11,7 @@
     <string>/opt/homebrew/bin/cloudflared</string>
     <string>tunnel</string>
     <string>--config</string>
-    <string>/Users/ashwinsathian/.cloudflared/config.yml</string>
+    <string>/Users/ashwinsathian/.cloudflared/typester-config.yml</string>
     <string>run</string>
     <string>typester</string>
   </array>
@@ -27,8 +27,8 @@
   </dict>
 
   <key>StandardOutPath</key>
-  <string>/opt/typester/logs/cloudflared.out.log</string>
+  <string>/Users/ashwinsathian/.typester/logs/cloudflared.out.log</string>
   <key>StandardErrorPath</key>
-  <string>/opt/typester/logs/cloudflared.err.log</string>
+  <string>/Users/ashwinsathian/.typester/logs/cloudflared.err.log</string>
 </dict>
 </plist>

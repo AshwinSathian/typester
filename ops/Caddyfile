@@ -1,9 +1,18 @@
 ## Typester static site — served locally, fronted by a Cloudflare Tunnel.
 ## Caddy terminates plain HTTP on localhost only; Cloudflare Tunnel handles the
 ## public TLS edge, so Caddy does not need (and must not open) a public port.
+##
+## The site address is deliberately `:8787` (port only, no "localhost" host
+## part) with an explicit `bind 127.0.0.1`: Caddy treats a hostname in the
+## site address as a Host-header matcher, not just a bind address, and
+## Cloudflare forwards the tunnel's real public hostname
+## (typester.ashwinsathian.com) to the origin - a `localhost:8787` address
+## would only match requests with a literal `Host: localhost` and silently
+## serve an empty response for everything else.
 
-http://localhost:8787 {
-	root * {$TYPESTER_RELEASE:/opt/typester/releases/current}/browser
+:8787 {
+	bind 127.0.0.1
+	root * {$TYPESTER_RELEASE:/Users/ashwinsathian/.typester/releases/current}/browser
 	encode zstd gzip
 	file_server
 
@@ -30,8 +39,13 @@ http://localhost:8787 {
 	@revalidate path /index.html /manifest.webmanifest /ngsw.json /ngsw-worker.js
 	header @revalidate Cache-Control "no-cache"
 
+	# Caddy's built-in MIME table doesn't know .webmanifest - browsers are
+	# lenient about it, but the correct type is worth setting explicitly.
+	@manifest path *.webmanifest
+	header @manifest Content-Type "application/manifest+json"
+
 	log {
-		output file /opt/typester/logs/caddy-access.log {
+		output file /Users/ashwinsathian/.typester/logs/caddy-access.log {
 			roll_size 10mb
 			roll_keep 5
 		}

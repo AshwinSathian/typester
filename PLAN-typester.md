@@ -119,7 +119,7 @@ Explicitly out of scope for this rebuild:
 │  │ Caddy :8787 (loopback) │◀─┼── cloudflared ingress          └──────────┬───────────┘
 │  │ serves dist/.../browser│  │                                            │
 │  └────────────────────────┘  │                                            ▼
-│  /opt/typester/releases/*     │                                    end user's browser
+│  ~/.typester/releases/*     │                                    end user's browser
 └──────────────────────────────┘
 ```
 
@@ -366,7 +366,7 @@ artifacts in place, so Phase 2 can start with zero setup friction.
 - [ ] Lighthouse pass on the production build — AC: Performance/Best Practices/SEO ≥95, Accessibility = 100.
 - [ ] Verify CSP/security headers against the real served output — AC: `curl -I http://localhost:8787` (Caddy) shows every header defined in `ops/Caddyfile`.
 - [ ] User completes the one-time hosting setup per `ops/README.md` (Caddy install, `cloudflared tunnel login`/`create`/`route dns`, launchd install) — AC: `https://typester.ashwinsathian.com` resolves over HTTPS and serves the app.
-- [ ] `ops/deploy.sh` dry-run — AC: produces a new timestamped release under `/opt/typester/releases` and flips the `current` symlink without downtime.
+- [ ] `ops/deploy.sh` dry-run — AC: produces a new timestamped release under `~/.typester/releases` and flips the `current` symlink without downtime.
       **Exit criteria**: App is live at the target domain, installable, and every automated check above is green.
 
 ## 🧪 Testing Strategy
