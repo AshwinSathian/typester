@@ -24,6 +24,8 @@ import {
 import { SoundService } from '../../core/services/sound.service';
 import { StorageService } from '../../core/services/storage.service';
 import { WordSourceService } from '../../core/services/word-source.service';
+import { Button } from '../../shared/ui/button/button';
+import { Dialog } from '../../shared/ui/dialog/dialog';
 import { StatBadge } from '../../shared/ui/stat-badge/stat-badge';
 import { TimerRing } from '../../shared/ui/timer-ring/timer-ring';
 
@@ -39,7 +41,7 @@ const INCORRECT_FEEDBACK_MS = 420;
 
 @Component({
   selector: 'app-game',
-  imports: [TimerRing, StatBadge],
+  imports: [TimerRing, StatBadge, Button, Dialog],
   templateUrl: './game.html',
   styleUrl: './game.css',
 })
@@ -59,6 +61,7 @@ export class Game implements OnInit {
   protected readonly remainingSeconds = signal(0);
   protected readonly feedback = signal<Feedback>('none');
   protected readonly typedValue = signal('');
+  protected readonly showExitConfirm = signal(false);
 
   /** Per-character diff of the last incorrect submission against the target
    *  word - a precision-instrument detail (DESIGN-typester.md §Game) showing
@@ -98,6 +101,10 @@ export class Game implements OnInit {
   private startedAtMs = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private feedbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  /** Set while the exit-confirm dialog is open - the round is genuinely
+   *  paused (see pauseTimer/resumeTimerIfPaused), not just visually frozen,
+   *  so deciding whether to leave never silently costs the player time. */
+  private pausedAtMs: number | null = null;
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -110,8 +117,16 @@ export class Game implements OnInit {
     // no-autofocus - unexpected-on-load focus shifts hurt AT users; a
     // deliberate, single programmatic focus() once gameplay begins doesn't).
     effect(() => {
-      if (this.phase() === 'playing') {
+      if (this.phase() === 'playing' && !this.showExitConfirm()) {
         this.answerInputRef()?.nativeElement.focus();
+      }
+    });
+
+    effect(() => {
+      if (this.showExitConfirm()) {
+        this.pauseTimer();
+      } else {
+        this.resumeTimerIfPaused();
       }
     });
   }
@@ -122,6 +137,61 @@ export class Game implements OnInit {
 
   protected onInput(inputEl: HTMLInputElement): void {
     this.typedValue.set(inputEl.value);
+  }
+
+  /** Escape opens the same exit-confirm dialog as the corner button - a
+   *  common, discoverable convention for "leave this full-screen mode". */
+  protected onEscape(): void {
+    if (this.phase() === 'playing' && !this.showExitConfirm()) {
+      this.openExitConfirm();
+    }
+  }
+
+  protected openExitConfirm(): void {
+    if (this.phase() !== 'playing') return;
+    this.showExitConfirm.set(true);
+  }
+
+  protected resumeGame(): void {
+    this.showExitConfirm.set(false);
+  }
+
+  /** Ends the round right now with whatever was scored so far - reuses
+   *  GameSession.expireTime, the exact same "time ran out mid-word" path a
+   *  natural timeout takes, so an early exit scores identically (time bonus
+   *  only if the word list was actually exhausted, which it wasn't). */
+  protected exitAndSave(): void {
+    this.showExitConfirm.set(false);
+    if (!this.session) return;
+    this.snapshot.set(this.session.expireTime(Date.now()));
+    this.endRound();
+  }
+
+  protected exitWithoutSaving(): void {
+    this.showExitConfirm.set(false);
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    void this.router.navigate(['/']);
+  }
+
+  private pauseTimer(): void {
+    if (this.pausedAtMs !== null) return;
+    this.pausedAtMs = Date.now();
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+  }
+
+  private resumeTimerIfPaused(): void {
+    if (this.pausedAtMs === null) return;
+    this.startedAtMs += Date.now() - this.pausedAtMs;
+    this.pausedAtMs = null;
+    if (this.phase() === 'playing' && this.intervalId === null) {
+      this.intervalId = setInterval(() => this.tick(), TICK_INTERVAL_MS);
+    }
   }
 
   protected onSubmit(inputEl: HTMLInputElement): void {

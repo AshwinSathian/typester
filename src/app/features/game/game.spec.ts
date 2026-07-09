@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { Difficulty } from '../../core/models/difficulty';
+import { StorageService } from '../../core/services/storage.service';
 import { WordSourceService } from '../../core/services/word-source.service';
 import { Game } from './game';
 
@@ -18,6 +19,21 @@ describe('Game', () => {
     TestBed.configureTestingModule({
       providers: [provideRouter([]), { provide: WordSourceService, useClass: FakeWordSource }],
     });
+
+    // jsdom doesn't implement <dialog>'s showModal()/close() - polyfill with
+    // the same real-browser semantics (toggling the `open` attribute) the
+    // Dialog component's own spec uses.
+    if (!HTMLDialogElement.prototype.showModal) {
+      HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement): void {
+        this.setAttribute('open', '');
+      };
+    }
+    if (!HTMLDialogElement.prototype.close) {
+      HTMLDialogElement.prototype.close = function (this: HTMLDialogElement): void {
+        this.removeAttribute('open');
+        this.dispatchEvent(new Event('close'));
+      };
+    }
   });
 
   afterEach(() => {
@@ -109,5 +125,120 @@ describe('Game', () => {
       ['/results'],
       expect.objectContaining({ state: expect.anything() }),
     );
+  });
+
+  it('opens the exit-confirm dialog from the corner button', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+
+    el.querySelector<HTMLButtonElement>('.game__exit')!.click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('dialog')?.hasAttribute('open')).toBe(true);
+  });
+
+  it('opens the exit-confirm dialog on Escape while playing', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+
+    el.querySelector('.game__input')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    fixture.detectChanges();
+
+    expect(el.querySelector('dialog')?.hasAttribute('open')).toBe(true);
+  });
+
+  it('pauses the countdown while the exit-confirm dialog is open', async () => {
+    const fixture = await createGame('30');
+    const el = fixture.nativeElement as HTMLElement;
+
+    el.querySelector<HTMLButtonElement>('.game__exit')!.click();
+    fixture.detectChanges();
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    fixture.detectChanges();
+    const remainingWhilePaused = fixture.componentInstance['remainingSeconds']();
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance['remainingSeconds']()).toBe(remainingWhilePaused);
+  });
+
+  it('"Keep playing" resumes without saving or discarding', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    el.querySelector<HTMLButtonElement>('.game__exit')!.click();
+    fixture.detectChanges();
+
+    const keepPlayingButton = Array.from(el.querySelectorAll('app-button button')).find(
+      (b) => b.textContent?.trim() === 'Keep playing',
+    ) as HTMLButtonElement;
+    keepPlayingButton.click();
+    fixture.detectChanges();
+
+    expect(el.querySelector('dialog')?.hasAttribute('open')).toBe(false);
+    expect(navigateSpy).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['phase']()).toBe('playing');
+  });
+
+  it('"Discard & exit" leaves without recording a result', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // Score a word first so there'd be something to lose by discarding.
+    const word = el.querySelector('.game__word')?.textContent?.trim() ?? '';
+    const input = el.querySelector('.game__input') as HTMLInputElement;
+    input.value = word;
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.game__exit')!.click();
+    fixture.detectChanges();
+    const discardButton = Array.from(el.querySelectorAll('app-button button')).find(
+      (b) => b.textContent?.trim() === 'Discard & exit',
+    ) as HTMLButtonElement;
+    discardButton.click();
+    fixture.detectChanges();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/']);
+    const storage = TestBed.inject(StorageService);
+    expect(storage.stats().roundsPlayed).toBe(0);
+  });
+
+  it('"Save score & exit" records the partial result and goes to Results', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const word = el.querySelector('.game__word')?.textContent?.trim() ?? '';
+    const input = el.querySelector('.game__input') as HTMLInputElement;
+    input.value = word;
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.game__exit')!.click();
+    fixture.detectChanges();
+    const saveButton = Array.from(el.querySelectorAll('app-button button')).find(
+      (b) => b.textContent?.trim() === 'Save score & exit',
+    ) as HTMLButtonElement;
+    saveButton.click();
+    fixture.detectChanges();
+
+    expect(navigateSpy).toHaveBeenCalledWith(
+      ['/results'],
+      expect.objectContaining({
+        state: expect.objectContaining({ result: expect.objectContaining({ wordsCorrect: 1 }) }),
+      }),
+    );
+    const storage = TestBed.inject(StorageService);
+    expect(storage.stats().roundsPlayed).toBe(1);
   });
 });

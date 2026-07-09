@@ -4,6 +4,25 @@
   }
 
   @if (phase() === 'playing' && snapshot(); as snap) {
+    <button
+      type="button"
+      class="game__exit"
+      aria-label="Exit round"
+      title="Exit round"
+      (click)="openExitConfirm()"
+      (keydown.escape)="onEscape()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+      </svg>
+    </button>
+
     <app-timer-ring
       [remainingSeconds]="remainingSeconds()"
       [totalSeconds]="config().durationSeconds"
@@ -31,6 +50,7 @@
         aria-label="Type the word shown above"
         (input)="onInput(answerInput)"
         (keydown.enter)="onSubmit(answerInput)"
+        (keydown.escape)="onEscape()"
       />
 
       @if (feedback() === 'incorrect') {
@@ -55,5 +75,24 @@
     <div class="sr-only" role="status" aria-live="polite">
       {{ liveAnnouncement() }}
     </div>
+
+    <app-dialog [(open)]="showExitConfirm" title="Exit this round?">
+      <p class="game__exit-copy">
+        You've scored <strong>{{ snap.score }}</strong> pts with a
+        <strong>{{ snap.streak }}</strong> streak so far. Save it as your result, or discard this
+        round entirely.
+      </p>
+      <div class="game__exit-actions">
+        <app-button variant="primary" [fullWidth]="true" (pressed)="exitAndSave()">
+          Save score & exit
+        </app-button>
+        <app-button variant="secondary" [fullWidth]="true" (pressed)="exitWithoutSaving()">
+          Discard & exit
+        </app-button>
+        <app-button variant="ghost" [fullWidth]="true" (pressed)="resumeGame()">
+          Keep playing
+        </app-button>
+      </div>
+    </app-dialog>
   }
 </main>
