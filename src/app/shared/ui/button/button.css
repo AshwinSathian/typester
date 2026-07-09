@@ -11,7 +11,8 @@
   border: 1px solid transparent;
   cursor: pointer;
   transition:
-    transform var(--duration-instant) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
     background-color var(--duration-fast) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard),
     opacity var(--duration-fast) var(--ease-standard);
@@ -19,6 +20,7 @@
 
 .app-button:active:not(:disabled) {
   transform: scale(0.97);
+  transition-duration: var(--duration-instant);
 }
 
 .app-button:disabled {
@@ -37,6 +39,8 @@
 
 .app-button--primary:hover:not(:disabled) {
   filter: brightness(0.85);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--color-accent-strong) 35%, transparent);
 }
 
 .app-button--secondary {
@@ -47,6 +51,8 @@
 
 .app-button--secondary:hover:not(:disabled) {
   background: var(--color-surface-raised);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--color-text) 8%, transparent);
 }
 
 .app-button--ghost {

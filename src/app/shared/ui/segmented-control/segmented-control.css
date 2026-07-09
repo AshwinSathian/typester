@@ -30,4 +30,14 @@
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: 0 1px 2px oklch(0% 0 0 / 10%);
+  animation: app-segmented-settle var(--duration-fast) var(--ease-spring);
+}
+
+@keyframes app-segmented-settle {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1);
+  }
 }
