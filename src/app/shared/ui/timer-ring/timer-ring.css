@@ -1,0 +1,29 @@
+.app-timer-ring {
+  width: 5rem;
+  height: 5rem;
+  transform: rotate(-90deg);
+}
+
+.app-timer-ring__track {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 6;
+}
+
+.app-timer-ring__progress {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition:
+    stroke-dashoffset var(--duration-base) linear,
+    stroke var(--duration-fast) var(--ease-standard);
+}
+
+.app-timer-ring--warning .app-timer-ring__progress {
+  stroke: var(--color-warning);
+}
+
+.app-timer-ring--danger .app-timer-ring__progress {
+  stroke: var(--color-danger);
+}

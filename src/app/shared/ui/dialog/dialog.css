@@ -1,0 +1,19 @@
+.app-dialog {
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  max-width: 28rem;
+  width: calc(100vw - var(--space-8));
+}
+
+.app-dialog::backdrop {
+  background: oklch(0% 0 0 / 45%);
+}
+
+.app-dialog__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}

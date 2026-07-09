@@ -1,0 +1,38 @@
+.app-stat-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-md);
+  min-width: 4.5rem;
+}
+
+.app-stat-badge__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.app-stat-badge__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  display: inline-block;
+}
+
+.app-stat-badge__value--pop {
+  animation: app-stat-badge-pop var(--duration-fast) var(--ease-spring);
+}
+
+@keyframes app-stat-badge-pop {
+  from {
+    transform: scale(1.2);
+  }
+  to {
+    transform: scale(1);
+  }
+}
