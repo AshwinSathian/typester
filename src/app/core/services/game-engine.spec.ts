@@ -6,6 +6,7 @@ import {
   WordPools,
   buildRoundWords,
   closestAchievementMiss,
+  escalateByLength,
   evaluateAchievements,
   isNearMiss,
   multiplierForStreak,
@@ -65,6 +66,32 @@ describe('buildRoundWords', () => {
     const config: GameConfig = { mode: 'timed', difficulty: 'hard', durationSeconds: 30 };
     const words = buildRoundWords(config, pools, () => 0); // rng() always 0 -> would be a power word if allowed
     expect(words[0].isPowerWord).toBe(false);
+  });
+
+  it('escalates a timed round so its second half skews longer on average than its first half', () => {
+    const config: GameConfig = { mode: 'timed', difficulty: 'hard', durationSeconds: 30 };
+    const words = buildRoundWords(config, pools, sequentialRng());
+    const midpoint = Math.floor(words.length / 2);
+    const firstHalfAvg =
+      words.slice(0, midpoint).reduce((sum, w) => sum + w.text.length, 0) / midpoint;
+    const secondHalfAvg =
+      words.slice(midpoint).reduce((sum, w) => sum + w.text.length, 0) / (words.length - midpoint);
+    expect(secondHalfAvg).toBeGreaterThanOrEqual(firstHalfAvg);
+  });
+});
+
+describe('escalateByLength', () => {
+  it("groups shorter words before longer words, preserving each group's relative order", () => {
+    // lengths: a=1, ccc=3, bb=2, dddd=4 -> median length 3 -> shorter group
+    // keeps ["a","ccc","bb"] in their original relative order, then "dddd".
+    const words = [entry('a'), entry('ccc'), entry('bb'), entry('dddd')];
+    const result = escalateByLength(words);
+    expect(result.map((w) => w.text)).toEqual(['a', 'ccc', 'bb', 'dddd']);
+  });
+
+  it('handles an empty or single-word list without throwing', () => {
+    expect(escalateByLength([])).toEqual([]);
+    expect(escalateByLength([entry('cat')])).toEqual([entry('cat')]);
   });
 });
 
@@ -203,6 +230,70 @@ describe('GameSession', () => {
     expect(session.snapshot().correctChars).toBe(3);
     session.submit('dog', 2_000);
     expect(session.snapshot().correctChars).toBe(6);
+  });
+
+  it('exposes the next 1-2 upcoming words for the look-ahead queue', () => {
+    const session = new GameSession(config, [entry('cat'), entry('dog'), entry('sun')]);
+    session.start(0);
+    expect(session.snapshot().upcomingWords.map((w) => w.text)).toEqual(['dog', 'sun']);
+
+    session.submit('cat', 100);
+    expect(session.snapshot().upcomingWords.map((w) => w.text)).toEqual(['sun']);
+
+    session.submit('dog', 200);
+    expect(session.snapshot().upcomingWords).toEqual([]);
+  });
+
+  it('livesRemaining is null for a quick/timed session with no mistake limit', () => {
+    const session = new GameSession(config, [entry('cat')]);
+    session.start(0);
+    expect(session.snapshot().livesRemaining).toBeNull();
+  });
+});
+
+describe('GameSession — Endless/Survival mode (mistakesAllowed)', () => {
+  const config: GameConfig = { mode: 'endless', difficulty: 'easy', durationSeconds: 3 };
+
+  it('reports lives remaining, decrementing on each mistake', () => {
+    const session = new GameSession(config, [entry('cat'), entry('dog'), entry('sun')], 3);
+    session.start(0);
+    expect(session.snapshot().livesRemaining).toBe(3);
+
+    session.submit('wrong', 100);
+    expect(session.snapshot().livesRemaining).toBe(2);
+  });
+
+  it('ends the round on the Nth mistake, independent of whether words remain', () => {
+    const session = new GameSession(
+      config,
+      [entry('cat'), entry('dog'), entry('sun'), entry('run')],
+      2,
+    );
+    session.start(0);
+
+    session.submit('wrong', 100);
+    const outcome = session.submit('wrong-again', 200);
+
+    expect(outcome.finished).toBe(true);
+    expect(session.snapshot().state).toBe('finished');
+    expect(session.snapshot().livesRemaining).toBe(0);
+    // Two words were never even reached - ending on mistakes, not exhaustion.
+    expect(session.snapshot().wordIndex).toBeLessThan(4);
+  });
+
+  it('does not regress the existing timed-mode exhaustion end condition', () => {
+    const timedConfig: GameConfig = { mode: 'timed', difficulty: 'easy', durationSeconds: 30 };
+    const session = new GameSession(timedConfig, [entry('cat')]);
+    session.start(0);
+    const outcome = session.submit('cat', 100);
+    expect(outcome.finished).toBe(true);
+  });
+
+  it('a correct submission before the mistake limit does not end the round early', () => {
+    const session = new GameSession(config, [entry('cat'), entry('dog')], 3);
+    session.start(0);
+    const outcome = session.submit('cat', 100);
+    expect(outcome.finished).toBe(false);
   });
 });
 

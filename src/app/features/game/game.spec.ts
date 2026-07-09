@@ -12,6 +12,12 @@ class FakeWordSource {
   }
 }
 
+class FakeWordSourceFourWords {
+  async getWords(difficulty: Difficulty): Promise<readonly string[]> {
+    return difficulty === 'easy' ? ['cat', 'dog', 'sun', 'run'] : [];
+  }
+}
+
 describe('Game', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -294,5 +300,124 @@ describe('Game', () => {
     );
     const storage = TestBed.inject(StorageService);
     expect(storage.stats().roundsPlayed).toBe(1);
+  });
+});
+
+describe('Game — word look-ahead queue', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.useFakeTimers();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: WordSourceService, useClass: FakeWordSourceFourWords },
+      ],
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function createGame() {
+    const fixture = TestBed.createComponent(Game);
+    fixture.componentRef.setInput('mode', 'timed');
+    fixture.componentRef.setInput('difficulty', 'easy');
+    fixture.componentRef.setInput('duration', '30');
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders the next two upcoming words, visually distinct from the current one', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('.game__word')).not.toBeNull();
+    expect(el.querySelector('.game__word-slot--next')).not.toBeNull();
+    expect(el.querySelector('.game__word-slot--next2')).not.toBeNull();
+  });
+
+  it('shifts the queue by one slot after each correct submission', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector('.game__input') as HTMLInputElement;
+
+    const wordBefore = el.querySelector('.game__word')?.textContent?.trim();
+    const nextBefore = el.querySelector('.game__word-slot--next')?.textContent?.trim();
+    const next2Before = el.querySelector('.game__word-slot--next2')?.textContent?.trim();
+
+    input.value = wordBefore ?? '';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(el.querySelector('.game__word')?.textContent?.trim()).toBe(nextBefore);
+    expect(el.querySelector('.game__word-slot--next')?.textContent?.trim()).toBe(next2Before);
+  });
+});
+
+describe('Game — Endless/Survival mode', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.useFakeTimers();
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), { provide: WordSourceService, useClass: FakeWordSource }],
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function createEndlessGame(lives = '2') {
+    const fixture = TestBed.createComponent(Game);
+    fixture.componentRef.setInput('mode', 'endless');
+    fixture.componentRef.setInput('difficulty', 'easy');
+    fixture.componentRef.setInput('duration', lives); // reused as mistakes-allowed
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('shows a lives-remaining dot row instead of the TimerRing', async () => {
+    const fixture = await createEndlessGame();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('app-timer-ring')).toBeNull();
+    expect(el.querySelectorAll('.game__life-dot')).toHaveLength(2);
+    expect(el.querySelectorAll('.game__life-dot--spent')).toHaveLength(0);
+  });
+
+  it('marks a life spent on each mistake and ends the round on the last one', async () => {
+    const fixture = await createEndlessGame('2');
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector('.game__input') as HTMLInputElement;
+
+    input.value = 'zzz-wrong';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.game__life-dot--spent')).toHaveLength(1);
+    expect(navigateSpy).not.toHaveBeenCalled();
+
+    input.value = 'zzz-wrong-again';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/results'], expect.objectContaining({}));
+  });
+
+  it('does not end the round from the clock - only mistakes/exhaustion matter', async () => {
+    const fixture = await createEndlessGame('2');
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    await vi.advanceTimersByTimeAsync(120_000);
+    fixture.detectChanges();
+
+    expect(navigateSpy).not.toHaveBeenCalled();
   });
 });

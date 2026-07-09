@@ -14,7 +14,11 @@
   } @else {
     <div class="home__hero">
       <h1 class="home__title">Typester<span class="home__caret" aria-hidden="true"></span></h1>
-      <p class="home__tagline">Type fast. Beat the clock. Chase your best score.</p>
+      <p class="home__preview" aria-hidden="true">
+        <span class="home__preview-text">{{ previewText() }}</span
+        ><span class="home__caret home__caret--preview"></span>
+      </p>
+      <p class="sr-only">Type fast. Beat the clock. Chase your best score.</p>
 
       @if (hasPlayed()) {
         <div class="home__teaser" role="status">
@@ -74,6 +78,15 @@
       @if (showModePicker()) {
         <div class="home__picker" id="mode-picker">
           <div class="home__picker-group">
+            <span class="home__picker-label" id="mode-label">Mode</span>
+            <app-segmented-control
+              [options]="modeOptions"
+              [(value)]="pickerMode"
+              ariaLabel="Mode"
+            />
+          </div>
+
+          <div class="home__picker-group">
             <span class="home__picker-label" id="difficulty-label">Difficulty</span>
             <app-segmented-control
               [options]="difficultyOptions"
@@ -82,12 +95,32 @@
             />
           </div>
 
+          @if (pickerMode() === 'endless') {
+            <div class="home__picker-group">
+              <span class="home__picker-label" id="lives-label">Lives</span>
+              <app-segmented-control
+                [options]="livesOptions"
+                [(value)]="pickerLives"
+                ariaLabel="Lives"
+              />
+            </div>
+          } @else {
+            <div class="home__picker-group">
+              <span class="home__picker-label" id="duration-label">Duration</span>
+              <app-segmented-control
+                [options]="durationOptions"
+                [(value)]="pickerDuration"
+                ariaLabel="Duration"
+              />
+            </div>
+          }
+
           <div class="home__picker-group">
-            <span class="home__picker-label" id="duration-label">Duration</span>
+            <span class="home__picker-label" id="pack-label">Word Pack</span>
             <app-segmented-control
-              [options]="durationOptions"
-              [(value)]="pickerDuration"
-              ariaLabel="Duration"
+              [options]="packOptions"
+              [(value)]="pickerPack"
+              ariaLabel="Word Pack"
             />
           </div>
 

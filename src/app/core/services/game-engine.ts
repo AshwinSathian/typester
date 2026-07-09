@@ -23,6 +23,10 @@ export interface WordPools {
 export interface SessionSnapshot {
   readonly state: SessionState;
   readonly currentWord: WordEntry | null;
+  /** The next 1-2 words after currentWord, for the Game screen's word
+   *  look-ahead queue (DESIGN §Game screen additions) - never more than
+   *  what's actually left in the round. */
+  readonly upcomingWords: readonly WordEntry[];
   readonly wordIndex: number;
   readonly totalWords: number;
   readonly score: number;
@@ -35,6 +39,9 @@ export interface SessionSnapshot {
    *  WPM formula divides by elapsed minutes; exposed so the Game screen can
    *  compute a *live* WPM reading without duplicating the formula. */
   readonly correctChars: number;
+  /** Mistakes remaining before Endless/Survival mode ends the round; null
+   *  for quick/timed sessions, which have no mistake limit. */
+  readonly livesRemaining: number | null;
 }
 
 export interface SubmitOutcome {
@@ -110,10 +117,36 @@ function withPowerWords(words: readonly WordEntry[], rng: () => number): WordEnt
 }
 
 /**
+ * Stably partitions an already-shuffled word list into a shorter-word half
+ * and a longer-word half (median split by character length), then
+ * concatenates shorter-first - so a round's second half skews toward
+ * longer/rarer words than its first half, without disturbing each half's
+ * existing shuffled order. Applied before power-word assignment so "the
+ * first word is never a power word" still holds regardless of reordering.
+ *
+ * This is a static per-round escalation, not a live reaction to the
+ * player's current streak - GameSession's word list is built once, upfront,
+ * before a session (and therefore a streak) exists to react to. Extending
+ * `buildRoundWords` this way is the practical, lower-risk reading of
+ * "escalating in-round difficulty" that doesn't require reworking
+ * GameSession's tested draw-once contract (PLAN-typester-growth.md Phase 8).
+ */
+export function escalateByLength(words: readonly WordEntry[]): WordEntry[] {
+  if (words.length <= 1) return [...words];
+  const lengths = words.map((w) => w.text.length).sort((a, b) => a - b);
+  const median = lengths[Math.floor(lengths.length / 2)];
+  const shorter = words.filter((w) => w.text.length <= median);
+  const longer = words.filter((w) => w.text.length > median);
+  return [...shorter, ...longer];
+}
+
+/**
  * Builds the ordered word list for a round: Quick Play uses the fixed
  * 4 easy + 4 medium + 2 hard composition (legacy behavior, preserved
- * deliberately); Timed mode draws the full pool for the chosen difficulty,
- * without replacement, so a round only ends early if the clock runs out.
+ * deliberately); Timed/Endless mode draws the full pool for the chosen
+ * difficulty, without replacement, escalated toward longer words as the
+ * round progresses, so a round only ends early if the clock (or the
+ * mistake limit) runs out.
  */
 export function buildRoundWords(
   config: GameConfig,
@@ -131,10 +164,8 @@ export function buildRoundWords(
 
   const difficulty = config.difficulty as Difficulty;
   const drawn = drawWithoutReplacement(pools[difficulty], pools[difficulty].length, rng);
-  return withPowerWords(
-    drawn.map((text) => ({ text, difficulty, isPowerWord: false })),
-    rng,
-  );
+  const entries = drawn.map((text) => ({ text, difficulty, isPowerWord: false }));
+  return withPowerWords(escalateByLength(entries), rng);
 }
 
 /** Per-second bonus awarded for finishing the word list before time runs out. */
@@ -156,6 +187,11 @@ export class GameSession {
   constructor(
     private readonly config: GameConfig,
     words: readonly WordEntry[],
+    /** Endless/Survival mode: the round finishes on the Nth incorrect
+     *  submission instead of (or in addition to) running out of words.
+     *  `null` (the default) preserves the existing unlimited-mistakes
+     *  behavior for quick/timed sessions exactly as before. */
+    private readonly mistakesAllowed: number | null = null,
   ) {
     if (words.length === 0) {
       throw new Error('GameSession requires at least one word');
@@ -195,12 +231,15 @@ export class GameSession {
       this.streak = 0;
     }
 
-    const exhausted = this.index >= this.words.length;
-    if (exhausted) {
+    const mistakesExhausted =
+      this.mistakesAllowed !== null && this.incorrectCount >= this.mistakesAllowed;
+    const wordsExhausted = this.index >= this.words.length;
+    const finished = wordsExhausted || mistakesExhausted;
+    if (finished) {
       this.finish(nowMs);
     }
 
-    return { correct, nearMiss, finished: exhausted, snapshot: this.snapshot() };
+    return { correct, nearMiss, finished, snapshot: this.snapshot() };
   }
 
   /** Called by the Angular wrapper's timer when the clock reaches zero. */
@@ -220,6 +259,7 @@ export class GameSession {
     return {
       state: this.state,
       currentWord: this.index < this.words.length ? this.words[this.index] : null,
+      upcomingWords: this.words.slice(this.index + 1, this.index + 3),
       wordIndex: this.index,
       totalWords: this.words.length,
       score: this.score,
@@ -229,6 +269,10 @@ export class GameSession {
       correctCount: this.correctCount,
       incorrectCount: this.incorrectCount,
       correctChars: this.correctChars,
+      livesRemaining:
+        this.mistakesAllowed === null
+          ? null
+          : Math.max(0, this.mistakesAllowed - this.incorrectCount),
     };
   }
 

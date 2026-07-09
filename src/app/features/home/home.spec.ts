@@ -7,7 +7,12 @@ import { Home } from './home';
 describe('Home', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.useFakeTimers();
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows no stats teaser for a first-time visitor', () => {
@@ -73,13 +78,13 @@ describe('Home', () => {
     fixture.detectChanges();
 
     const difficultyButtons = fixture.nativeElement
-      .querySelectorAll('#mode-picker app-segmented-control')[0]
+      .querySelectorAll('#mode-picker app-segmented-control')[1]
       .querySelectorAll('button');
     difficultyButtons[2].click(); // hard
     fixture.detectChanges();
 
     const durationButtons = fixture.nativeElement
-      .querySelectorAll('#mode-picker app-segmented-control')[1]
+      .querySelectorAll('#mode-picker app-segmented-control')[2]
       .querySelectorAll('button');
     durationButtons[1].click(); // 60s
     fixture.detectChanges();
@@ -89,7 +94,65 @@ describe('Home', () => {
     );
     startButton.click();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/play', 'timed', 'hard', '60']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/play', 'timed', 'hard', '60'], {
+      queryParams: {},
+    });
+  });
+
+  it('navigates to an endless round with the chosen lives count once Endless is selected', () => {
+    const fixture = TestBed.createComponent(Home);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelectorAll('app-button')[1].querySelector('button').click();
+    fixture.detectChanges();
+
+    const modeButtons = fixture.nativeElement
+      .querySelectorAll('#mode-picker app-segmented-control')[0]
+      .querySelectorAll('button');
+    modeButtons[1].click(); // endless
+    fixture.detectChanges();
+
+    const livesButtons = fixture.nativeElement
+      .querySelectorAll('#mode-picker app-segmented-control')[2]
+      .querySelectorAll('button');
+    livesButtons[0].click(); // 3 lives
+    fixture.detectChanges();
+
+    const startButton = fixture.nativeElement.querySelector(
+      '#mode-picker app-button:last-of-type button',
+    );
+    startButton.click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/play', 'endless', 'easy', '3'], {
+      queryParams: {},
+    });
+  });
+
+  it('includes a pack query param when a non-default word pack is chosen', () => {
+    const fixture = TestBed.createComponent(Home);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelectorAll('app-button')[1].querySelector('button').click();
+    fixture.detectChanges();
+
+    const packButtons = fixture.nativeElement
+      .querySelectorAll('#mode-picker app-segmented-control')[3]
+      .querySelectorAll('button');
+    packButtons[1].click(); // first real pack after "Default"
+    fixture.detectChanges();
+
+    const startButton = fixture.nativeElement.querySelector(
+      '#mode-picker app-button:last-of-type button',
+    );
+    startButton.click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/play', 'timed', 'easy', '60'], {
+      queryParams: { pack: 'movies-tv' },
+    });
   });
 
   it('navigates to help, settings, and stats', () => {
@@ -164,5 +227,46 @@ describe('Home', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.home__hero')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.home__challenge')).toBeNull();
+  });
+
+  it('auto-types the hero preview one character at a time', async () => {
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+
+    // The first character is set synchronously at construction, before any
+    // timer fires - each subsequent PREVIEW_TYPE_MS tick reveals one more.
+    const afterOneChar = fixture.nativeElement.querySelector('.home__preview-text')?.textContent;
+    expect(afterOneChar?.length).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(90);
+    fixture.detectChanges();
+    const afterTwoChars = fixture.nativeElement.querySelector('.home__preview-text')?.textContent;
+    expect(afterTwoChars?.length).toBe(2);
+    expect(afterTwoChars?.startsWith(afterOneChar ?? '')).toBe(true);
+  });
+
+  it('freezes the preview on the first full word under reduced motion, without looping', async () => {
+    const storage = TestBed.inject(StorageService);
+    storage.updateSettings({ motion: 'reduced' });
+
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+    const initialText = fixture.nativeElement.querySelector('.home__preview-text')?.textContent;
+
+    await vi.advanceTimersByTimeAsync(5_000);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.home__preview-text')?.textContent).toBe(
+      initialText,
+    );
+  });
+
+  it('marks the preview as decorative and keeps the same copy available to screen readers', () => {
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('.home__preview')?.getAttribute('aria-hidden')).toBe('true');
+    expect(el.querySelector('.sr-only')?.textContent).toContain('Type fast');
   });
 });

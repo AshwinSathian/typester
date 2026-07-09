@@ -56,10 +56,27 @@
   animation: none;
 }
 
-.home__tagline {
-  color: var(--color-text-muted);
-  font-size: var(--text-base);
+/* Auto-typing hero preview - a first-time visitor sees what the mechanic
+   looks like before clicking anything (DESIGN §Home screen additions).
+   Purely decorative (aria-hidden); the static sr-only paragraph right
+   after it carries the same meaning for screen readers. */
+.home__preview {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  height: 1.5em;
   margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+.home__preview-text {
+  min-width: 1ch;
+}
+
+.home__caret--preview {
+  height: 1em;
 }
 
 .home__teaser {

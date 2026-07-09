@@ -47,6 +47,19 @@ describe('gameConfigGuard', () => {
     expect(result).toBeInstanceOf(UrlTree);
   });
 
+  it('allows a valid endless route for every difficulty/lives combination', () => {
+    for (const difficulty of ['easy', 'medium', 'hard']) {
+      for (const lives of ['3', '5', '10']) {
+        expect(runGuard({ mode: 'endless', difficulty, duration: lives })).toBe(true);
+      }
+    }
+  });
+
+  it('redirects home on a lives count outside the allowed set for endless mode', () => {
+    const result = runGuard({ mode: 'endless', difficulty: 'easy', duration: '7' });
+    expect(result).toBeInstanceOf(UrlTree);
+  });
+
   it('redirects home to the root path', () => {
     const router = TestBed.inject(Router);
     const result = runGuard({ mode: 'nope', difficulty: 'nope', duration: 'nope' }) as UrlTree;

@@ -29,6 +29,7 @@ import {
 import { SoundService } from '../../core/services/sound.service';
 import { StorageService } from '../../core/services/storage.service';
 import { WordSourceService } from '../../core/services/word-source.service';
+import { findWordPack } from '../../shared/data/word-packs';
 import { Button } from '../../shared/ui/button/button';
 import { Dialog } from '../../shared/ui/dialog/dialog';
 import { StatBadge } from '../../shared/ui/stat-badge/stat-badge';
@@ -58,6 +59,9 @@ export class Game implements OnInit {
   readonly difficulty = input<string>();
   readonly duration = input<string>();
   readonly date = input<string>();
+  /** Optional themed word pack (query param) - Timed/Endless only; Quick
+   *  Play keeps its fixed legacy composition (see loadPools()). */
+  readonly pack = input<string>();
 
   private readonly router = inject(Router);
   private readonly wordSource = inject(WordSourceService);
@@ -73,6 +77,10 @@ export class Game implements OnInit {
   protected readonly feedback = signal<Feedback>('none');
   protected readonly typedValue = signal('');
   protected readonly showExitConfirm = signal(false);
+  /** Pulses true briefly whenever the look-ahead queue shifts (a word
+   *  resolves correctly), driving the upcoming-word slots' entrance
+   *  animation - same signal-pulse pattern as StatBadge's `popping`. */
+  protected readonly wordShift = signal(false);
 
   /** Per-character diff of the last incorrect (or near-miss) submission
    *  against the target word - a precision-instrument detail
@@ -102,6 +110,20 @@ export class Game implements OnInit {
   });
 
   protected readonly isDaily = computed(() => !!this.date());
+  protected readonly isEndless = computed(() => this.config().mode === 'endless');
+  /** One entry per starting life, for the Endless/Survival lives-remaining
+   *  dot row (DESIGN §Endless/Survival mode visual treatment). */
+  protected readonly livesDots = computed(() =>
+    this.isEndless() ? Array.from({ length: this.config().durationSeconds }, (_, i) => i) : [],
+  );
+
+  /** Endless/Survival's word-difficulty escalation is made visually legible
+   *  via the spotlight glow intensifying (DESIGN §Endless/Survival mode
+   *  visual treatment), not a numeric level counter. */
+  protected readonly roundProgress = computed(() => {
+    const snap = this.snapshot();
+    return snap && snap.totalWords > 0 ? snap.wordIndex / snap.totalWords : 0;
+  });
 
   protected readonly config = computed<GameConfig>(() => {
     if (this.date()) return DAILY_CHALLENGE_CONFIG;
@@ -131,6 +153,7 @@ export class Game implements OnInit {
   private startedAtMs = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private feedbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private wordShiftTimeoutId: ReturnType<typeof setTimeout> | null = null;
   /** Set while the exit-confirm dialog is open - the round is genuinely
    *  paused (see pauseTimer/resumeTimerIfPaused), not just visually frozen,
    *  so deciding whether to leave never silently costs the player time. */
@@ -140,6 +163,7 @@ export class Game implements OnInit {
     this.destroyRef.onDestroy(() => {
       if (this.intervalId !== null) clearInterval(this.intervalId);
       if (this.feedbackTimeoutId !== null) clearTimeout(this.feedbackTimeoutId);
+      if (this.wordShiftTimeoutId !== null) clearTimeout(this.wordShiftTimeoutId);
     });
 
     // Zero-click round start: focus the answer field the moment it renders,
@@ -246,6 +270,7 @@ export class Game implements OnInit {
       this.typedValue.set('');
       const streak = outcome.snapshot.streak;
       this.sound.play(streak > 0 && streak % 5 === 0 ? 'combo' : 'correct');
+      this.pulseWordShift();
     } else {
       this.sound.play(outcome.nearMiss ? 'nearMiss' : 'incorrect');
     }
@@ -261,7 +286,10 @@ export class Game implements OnInit {
     const config = this.config();
     const words = await this.loadWords(config);
 
-    this.session = new GameSession(config, words);
+    // Endless/Survival reuses the route's third segment as a mistake limit
+    // instead of a duration - see GameConfig.durationSeconds.
+    const mistakesAllowed = config.mode === 'endless' ? config.durationSeconds : null;
+    this.session = new GameSession(config, words, mistakesAllowed);
     this.startedAtMs = Date.now();
     this.snapshot.set(this.session.start(this.startedAtMs));
     this.remainingSeconds.set(config.durationSeconds);
@@ -296,7 +324,13 @@ export class Game implements OnInit {
     }
 
     const difficulty = config.difficulty as Difficulty;
-    const words = await this.wordSource.getWords(difficulty);
+
+    // A themed word pack is bundled, curated content - it bypasses the
+    // live Datamuse fetch entirely, the same way the daily challenge does
+    // (PLAN-typester-growth.md Phase 8: "authored the same way as
+    // word-bank.ts - bundled, no runtime fetch dependency").
+    const pack = findWordPack(this.pack());
+    const words = pack ? pack.words[difficulty] : await this.wordSource.getWords(difficulty);
     return {
       easy: difficulty === 'easy' ? words : empty,
       medium: difficulty === 'medium' ? words : empty,
@@ -308,6 +342,11 @@ export class Game implements OnInit {
     if (!this.session) return;
     const nowMs = Date.now();
     this.elapsedMs.set(nowMs - this.startedAtMs);
+
+    // Endless/Survival has no clock - it only ends via GameSession's own
+    // mistake-limit/word-exhaustion check inside submit().
+    if (this.isEndless()) return;
+
     const elapsedSeconds = (nowMs - this.startedAtMs) / 1000;
     const remaining = Math.max(0, this.config().durationSeconds - elapsedSeconds);
     this.remainingSeconds.set(remaining);
@@ -317,6 +356,12 @@ export class Game implements OnInit {
       this.sound.play('timeUp');
       this.endRound();
     }
+  }
+
+  private pulseWordShift(): void {
+    this.wordShift.set(true);
+    if (this.wordShiftTimeoutId !== null) clearTimeout(this.wordShiftTimeoutId);
+    this.wordShiftTimeoutId = setTimeout(() => this.wordShift.set(false), 300);
   }
 
   private endRound(): void {

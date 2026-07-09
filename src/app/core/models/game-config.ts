@@ -1,7 +1,7 @@
 import { DIFFICULTIES, Difficulty } from './difficulty';
 import { Stats } from './stats';
 
-export type GameMode = 'quick' | 'timed';
+export type GameMode = 'quick' | 'timed' | 'endless';
 
 /** Route-param difficulty: 'mixed' is only valid for quick mode. */
 export type RouteDifficulty = Difficulty | 'mixed';
@@ -10,6 +10,11 @@ export const GAME_DURATIONS = [30, 60, 120] as const;
 export type GameDuration = (typeof GAME_DURATIONS)[number];
 
 export const QUICK_PLAY_DURATION_SECONDS = 90;
+
+/** "Lives" choices for Endless/Survival mode - the round ends on the Nth
+ *  mistake instead of a clock. Reuses the same route segment/GameConfig
+ *  field a timed round uses for seconds (see GameConfig.durationSeconds). */
+export const ENDLESS_MISTAKE_OPTIONS = [3, 5, 10] as const;
 
 /** Fixed word composition for Quick Play (legacy behavior, preserved deliberately). */
 export const QUICK_PLAY_COMPOSITION: Readonly<Record<Difficulty, number>> = {
@@ -21,6 +26,9 @@ export const QUICK_PLAY_COMPOSITION: Readonly<Record<Difficulty, number>> = {
 export interface GameConfig {
   readonly mode: GameMode;
   readonly difficulty: RouteDifficulty;
+  /** Seconds for quick/timed mode; mistakes-allowed ("lives") for endless
+   *  mode - reused rather than adding an endless-only field, since exactly
+   *  one of the two meanings ever applies for a given `mode`. */
   readonly durationSeconds: number;
 }
 
@@ -31,6 +39,7 @@ export function gameConfigKey(config: GameConfig): string {
 
 const VALID_DIFFICULTIES = new Set<string>(['easy', 'medium', 'hard']);
 const VALID_DURATIONS = new Set<number>(GAME_DURATIONS);
+const VALID_ENDLESS_LIVES = new Set<number>(ENDLESS_MISTAKE_OPTIONS);
 
 export function isValidGameConfig(mode: string, difficulty: string, duration: string): boolean {
   const durationNum = Number(duration);
@@ -41,6 +50,10 @@ export function isValidGameConfig(mode: string, difficulty: string, duration: st
 
   if (mode === 'timed') {
     return VALID_DIFFICULTIES.has(difficulty) && VALID_DURATIONS.has(durationNum);
+  }
+
+  if (mode === 'endless') {
+    return VALID_DIFFICULTIES.has(difficulty) && VALID_ENDLESS_LIVES.has(durationNum);
   }
 
   return false;

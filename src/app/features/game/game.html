@@ -20,23 +20,61 @@
         aria-hidden="true"
       >
         <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+        <!-- cursor-cap accent, mirroring .home__caret's rectangle -->
+        <rect
+          x="16.4"
+          y="4.4"
+          width="2"
+          height="2.6"
+          fill="currentColor"
+          stroke="none"
+          transform="rotate(45 17.4 5.7)"
+        />
       </svg>
     </button>
 
-    <app-timer-ring
-      [remainingSeconds]="remainingSeconds()"
-      [totalSeconds]="config().durationSeconds"
-    />
-
-    <div class="game__spotlight" [class.game__spotlight--combo]="snap.multiplier > 1">
+    @if (isEndless()) {
       <div
-        class="game__word"
-        [class.game__word--power]="snap.currentWord?.isPowerWord"
-        [class.game__word--correct]="feedback() === 'correct'"
-        [class.game__word--near]="feedback() === 'near'"
-        [class.game__word--incorrect]="feedback() === 'incorrect'"
+        class="game__lives"
+        role="status"
+        [attr.aria-label]="snap.livesRemaining + ' lives remaining'"
       >
-        {{ snap.currentWord?.text }}
+        @for (i of livesDots(); track i) {
+          <span
+            class="game__life-dot"
+            [class.game__life-dot--spent]="i >= (snap.livesRemaining ?? 0)"
+          ></span>
+        }
+      </div>
+    } @else {
+      <app-timer-ring
+        [remainingSeconds]="remainingSeconds()"
+        [totalSeconds]="config().durationSeconds"
+      />
+    }
+
+    <div
+      class="game__spotlight"
+      [class.game__spotlight--combo]="snap.multiplier > 1"
+      [class.game__spotlight--escalating]="isEndless()"
+      [style.--progress]="roundProgress()"
+    >
+      <div class="game__word-strip" [class.game__word-strip--shift]="wordShift()">
+        <div
+          class="game__word"
+          [class.game__word--power]="snap.currentWord?.isPowerWord"
+          [class.game__word--correct]="feedback() === 'correct'"
+          [class.game__word--near]="feedback() === 'near'"
+          [class.game__word--incorrect]="feedback() === 'incorrect'"
+        >
+          {{ snap.currentWord?.text }}
+        </div>
+        @if (snap.upcomingWords[0]; as next) {
+          <div class="game__word-slot game__word-slot--next">{{ next.text }}</div>
+        }
+        @if (snap.upcomingWords[1]; as next2) {
+          <div class="game__word-slot game__word-slot--next2">{{ next2.text }}</div>
+        }
       </div>
 
       <input
