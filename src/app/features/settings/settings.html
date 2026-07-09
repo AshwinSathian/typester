@@ -25,7 +25,9 @@
       (change)="onQuickPlayDurationChange($event)"
     />
     @if (settingsForm.quickPlayDurationSeconds().invalid()) {
-      <p class="settings__error" role="alert">Must be between 15 and 300 seconds.</p>
+      <p class="settings__error" role="alert">
+        Please enter a duration between 15 and 300 seconds.
+      </p>
     }
   </div>
 

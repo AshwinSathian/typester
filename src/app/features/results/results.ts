@@ -99,7 +99,7 @@ export class Results {
     if (outcome === 'copied') {
       this.toastMessage.set('Copied to clipboard');
     } else if (outcome === 'failed') {
-      this.toastMessage.set('Could not share');
+      this.toastMessage.set("Couldn't share right now");
     }
   }
 
