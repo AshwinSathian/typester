@@ -1,12 +1,44 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import { StorageService } from '../../core/services/storage.service';
 import { Home } from './home';
 
 describe('Home', () => {
   beforeEach(() => {
     window.localStorage.clear();
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
+  });
+
+  it('shows no stats teaser for a first-time visitor', () => {
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.home__teaser')).toBeNull();
+  });
+
+  it('shows a day-streak and best-score chip for a returning player', () => {
+    const storage = TestBed.inject(StorageService);
+    storage.recordResult({
+      config: { mode: 'timed', difficulty: 'easy', durationSeconds: 30 },
+      wordsCorrect: 10,
+      wordsIncorrect: 0,
+      baseScore: 10,
+      timeBonus: 5,
+      totalScore: 15,
+      wpm: 40,
+      accuracy: 1,
+      bestStreak: 10,
+      achievementsUnlocked: [],
+      finishedAt: new Date().toISOString(),
+    });
+
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+
+    const teaser = fixture.nativeElement.querySelector('.home__teaser');
+    expect(teaser).not.toBeNull();
+    expect(teaser.textContent).toContain('Best 15 pts');
   });
 
   it('navigates to a quick play round using the settings-configured duration', () => {

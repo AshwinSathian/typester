@@ -15,6 +15,10 @@ export interface Stats {
   readonly roundsPlayed: number;
   readonly totalWordsTyped: number;
   readonly difficultiesBeaten: readonly Difficulty[];
+  /** Consecutive calendar days (UTC) with at least one finished round. */
+  readonly dayStreak: number;
+  /** UTC `YYYY-MM-DD` of the last finished round — the streak's anchor date. */
+  readonly lastPlayedDate: string | null;
 }
 
 export const DEFAULT_STATS: Stats = {
@@ -23,4 +27,6 @@ export const DEFAULT_STATS: Stats = {
   roundsPlayed: 0,
   totalWordsTyped: 0,
   difficultiesBeaten: [],
+  dayStreak: 0,
+  lastPlayedDate: null,
 };

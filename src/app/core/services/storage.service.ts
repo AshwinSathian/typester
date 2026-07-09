@@ -60,6 +60,38 @@ function isStats(value: unknown): value is Stats {
   );
 }
 
+/**
+ * dayStreak/lastPlayedDate were added after this app went live, so stored
+ * data from before that change won't have them - defaulted here rather than
+ * added to isStats's requirements, so a returning user's existing
+ * bestScores/achievements aren't wiped just because the schema grew a field.
+ */
+function normalizeStats(value: Stats): Stats {
+  return {
+    ...value,
+    dayStreak: value.dayStreak ?? 0,
+    lastPlayedDate: value.lastPlayedDate ?? null,
+  };
+}
+
+function dateKey(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+function nextDayStreak(
+  prior: Stats,
+  finishedAtIso: string,
+): Pick<Stats, 'dayStreak' | 'lastPlayedDate'> {
+  const today = dateKey(finishedAtIso);
+  if (prior.lastPlayedDate === today) {
+    return { dayStreak: prior.dayStreak, lastPlayedDate: today };
+  }
+
+  const yesterday = dateKey(new Date(new Date(finishedAtIso).getTime() - 86_400_000).toISOString());
+  const isConsecutive = prior.lastPlayedDate === yesterday;
+  return { dayStreak: isConsecutive ? prior.dayStreak + 1 : 1, lastPlayedDate: today };
+}
+
 export interface RecordResultOutcome {
   readonly stats: Stats;
   readonly achievementsUnlocked: readonly AchievementId[];
@@ -77,7 +109,7 @@ export class StorageService {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly settings = signal<Settings>(this.read(SETTINGS_KEY, isSettings, DEFAULT_SETTINGS));
-  readonly stats = signal<Stats>(this.read(STATS_KEY, isStats, DEFAULT_STATS));
+  readonly stats = signal<Stats>(normalizeStats(this.read(STATS_KEY, isStats, DEFAULT_STATS)));
 
   constructor() {
     if (this.isBrowser) {
@@ -121,6 +153,7 @@ export class StorageService {
       roundsPlayed: prior.roundsPlayed + 1,
       totalWordsTyped: prior.totalWordsTyped + result.wordsCorrect,
       difficultiesBeaten,
+      ...nextDayStreak(prior, result.finishedAt),
     };
 
     this.stats.set(next);
@@ -130,7 +163,7 @@ export class StorageService {
 
   private onStorageEvent(event: StorageEvent): void {
     if (event.key === STATS_KEY) {
-      this.stats.set(this.read(STATS_KEY, isStats, DEFAULT_STATS));
+      this.stats.set(normalizeStats(this.read(STATS_KEY, isStats, DEFAULT_STATS)));
     } else if (event.key === SETTINGS_KEY) {
       this.settings.set(this.read(SETTINGS_KEY, isSettings, DEFAULT_SETTINGS));
     }

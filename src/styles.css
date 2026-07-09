@@ -56,6 +56,14 @@
   --color-accent: oklch(42% 0.19 265);
   --color-accent-strong: oklch(38% 0.2 265);
 
+  /* Energy accent - a distinct warm hue reserved for in-round momentum
+     (combo multiplier, power words, streak) so it never competes with
+     --color-accent's job of marking primary actions/navigation. Two tokens
+     for the same reason as accent/accent-strong: text-on-bg vs filled-badge
+     each need a different lightness to hit 4.5:1 in their own context. */
+  --color-energy: oklch(52% 0.19 55);
+  --color-energy-strong: oklch(46% 0.2 55);
+
   /* Semantic feedback */
   --color-success: oklch(70% 0.17 152);
   --color-danger: oklch(63% 0.22 25);
@@ -112,6 +120,8 @@
   --color-text-muted: oklch(70% 0.01 265);
   --color-border: oklch(32% 0.012 265);
   --color-accent: oklch(72% 0.18 265);
+  --color-energy: oklch(78% 0.17 60);
+  --color-energy-strong: oklch(70% 0.19 58);
   --color-success: oklch(76% 0.16 152);
   --color-danger: oklch(70% 0.2 25);
   --color-warning: oklch(82% 0.14 85);
@@ -128,6 +138,8 @@
     --color-text-muted: oklch(70% 0.01 265);
     --color-border: oklch(32% 0.012 265);
     --color-accent: oklch(72% 0.18 265);
+    --color-energy: oklch(78% 0.17 60);
+    --color-energy-strong: oklch(70% 0.19 58);
     --color-success: oklch(76% 0.16 152);
     --color-danger: oklch(70% 0.2 25);
     --color-warning: oklch(82% 0.14 85);
@@ -161,6 +173,8 @@
 @theme {
   --color-accent: var(--color-accent);
   --color-accent-strong: var(--color-accent-strong);
+  --color-energy: var(--color-energy);
+  --color-energy-strong: var(--color-energy-strong);
   --color-success: var(--color-success);
   --color-danger: var(--color-danger);
   --color-warning: var(--color-warning);
@@ -189,6 +203,12 @@ body {
 body {
   margin: 0;
   background-color: var(--color-bg);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in oklch, var(--color-border) 70%, transparent) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
   color: var(--color-text);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;

@@ -85,6 +85,57 @@ describe('StorageService', () => {
     expect(service.stats().difficultiesBeaten).toEqual([]);
   });
 
+  it('starts a day streak of 1 on the first recorded round', () => {
+    const service = TestBed.inject(StorageService);
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-09T00:00:00.000Z' }));
+
+    expect(service.stats().dayStreak).toBe(1);
+    expect(service.stats().lastPlayedDate).toBe('2026-07-09');
+  });
+
+  it('does not increment the day streak for a second round on the same day', () => {
+    const service = TestBed.inject(StorageService);
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-09T00:00:00.000Z' }));
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-09T23:00:00.000Z' }));
+
+    expect(service.stats().dayStreak).toBe(1);
+  });
+
+  it('increments the day streak on the very next calendar day', () => {
+    const service = TestBed.inject(StorageService);
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-09T12:00:00.000Z' }));
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-10T01:00:00.000Z' }));
+
+    expect(service.stats().dayStreak).toBe(2);
+  });
+
+  it('resets the day streak to 1 after a skipped day', () => {
+    const service = TestBed.inject(StorageService);
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-09T12:00:00.000Z' }));
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-11T01:00:00.000Z' }));
+
+    expect(service.stats().dayStreak).toBe(1);
+    expect(service.stats().lastPlayedDate).toBe('2026-07-11');
+  });
+
+  it('defaults dayStreak/lastPlayedDate for stats persisted before those fields existed', () => {
+    window.localStorage.setItem(
+      'typester:v1:stats',
+      JSON.stringify({
+        bestScores: {},
+        achievementsUnlocked: [],
+        roundsPlayed: 3,
+        totalWordsTyped: 30,
+        difficultiesBeaten: ['easy'],
+      }),
+    );
+
+    const service = TestBed.inject(StorageService);
+    expect(service.stats().dayStreak).toBe(0);
+    expect(service.stats().lastPlayedDate).toBeNull();
+    expect(service.stats().roundsPlayed).toBe(3);
+  });
+
   it('reconciles stats written by another tab via the storage event', () => {
     const service = TestBed.inject(StorageService);
     service.recordResult(fixtureResult());

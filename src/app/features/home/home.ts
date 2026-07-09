@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Difficulty, DIFFICULTIES } from '../../core/models/difficulty';
 import { GAME_DURATIONS } from '../../core/models/game-config';
+import { BestScoreEntry } from '../../core/models/stats';
 import { StorageService } from '../../core/services/storage.service';
 import { Button } from '../../shared/ui/button/button';
 import {
@@ -34,6 +35,17 @@ export class Home {
   protected readonly durationOptions: readonly SegmentOption<string>[] = GAME_DURATIONS.map(
     (value) => ({ value: String(value), label: `${value}s` }),
   );
+
+  /** Surfaces StorageService's per-visit data back to a returning player -
+   *  a first-time visitor and a regular see a different Home screen. */
+  protected readonly stats = this.storage.stats;
+  protected readonly hasPlayed = computed(() => this.stats().roundsPlayed > 0);
+  protected readonly bestOverall = computed<BestScoreEntry | null>(() => {
+    const scores = Object.values(this.stats().bestScores);
+    return scores.length === 0
+      ? null
+      : scores.reduce((best, entry) => (entry.totalScore > best.totalScore ? entry : best));
+  });
 
   startQuickPlay(): void {
     const duration = this.storage.settings().quickPlayDurationSeconds;
