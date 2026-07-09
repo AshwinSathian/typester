@@ -6,6 +6,7 @@
   color: var(--color-text);
   max-width: 28rem;
   width: calc(100vw - var(--space-8));
+  box-shadow: var(--shadow-lg);
 }
 
 .app-dialog::backdrop {

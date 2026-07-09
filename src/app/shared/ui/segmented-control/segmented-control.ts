@@ -1,4 +1,5 @@
-import { Component, ElementRef, inject, input, model } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, ElementRef, TemplateRef, inject, input, model } from '@angular/core';
 
 export interface SegmentOption<T extends string = string> {
   readonly value: T;
@@ -9,24 +10,41 @@ export interface SegmentOption<T extends string = string> {
  * Keyboard-first radio group: arrow keys move focus and selection together
  * (WAI-ARIA APG radiogroup pattern), Enter/Space activates the focused
  * segment natively since each segment is a real <button>.
+ *
+ * `variant="card"` + `optionTemplate` renders each segment as a taller
+ * icon-and-label card instead of a compact pill (still the same accessible
+ * radiogroup underneath) - for pickers where an icon materially helps
+ * scanning (e.g. Settings' Theme/Motion), not a default worth reaching for
+ * everywhere a segmented control is used.
  */
 @Component({
   selector: 'app-segmented-control',
+  imports: [NgTemplateOutlet],
   template: `
-    <div class="app-segmented" role="radiogroup" [attr.aria-label]="ariaLabel()">
+    <div
+      class="app-segmented"
+      [class.app-segmented--card]="variant() === 'card'"
+      role="radiogroup"
+      [attr.aria-label]="ariaLabel()"
+    >
       @for (option of options(); track option.value; let i = $index) {
         <button
           #segment
           type="button"
           role="radio"
           class="app-segmented__option"
+          [class.app-segmented__option--card]="variant() === 'card'"
           [class.app-segmented__option--selected]="option.value === value()"
           [attr.aria-checked]="option.value === value()"
           [tabindex]="option.value === value() ? 0 : -1"
           (click)="select(option.value)"
           (keydown)="onKeydown($event, i)"
         >
-          {{ option.label }}
+          @if (optionTemplate(); as tpl) {
+            <ng-container *ngTemplateOutlet="tpl; context: { $implicit: option }" />
+          } @else {
+            {{ option.label }}
+          }
         </button>
       }
     </div>
@@ -37,6 +55,8 @@ export class SegmentedControl<T extends string = string> {
   readonly options = input.required<readonly SegmentOption<T>[]>();
   readonly value = model.required<T>();
   readonly ariaLabel = input('');
+  readonly variant = input<'pill' | 'card'>('pill');
+  readonly optionTemplate = input<TemplateRef<{ $implicit: SegmentOption<T> }> | undefined>();
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 

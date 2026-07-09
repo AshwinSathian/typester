@@ -35,3 +35,41 @@ describe('Toggle', () => {
     expect(button.getAttribute('aria-checked')).toBe('false');
   });
 });
+
+@Component({
+  selector: 'app-test-row-host',
+  imports: [Toggle],
+  template: `
+    <app-toggle
+      [(checked)]="checked"
+      label="Sound effects"
+      description="Play a cue for correct and incorrect answers"
+    />
+  `,
+})
+class RowTestHost {
+  readonly checked = signal(true);
+}
+
+describe('Toggle with label/description', () => {
+  it('renders the label and description as visible text', () => {
+    const fixture = TestBed.createComponent(RowTestHost);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('.app-toggle-row__label')?.textContent).toBe('Sound effects');
+    expect(el.querySelector('.app-toggle-row__description')?.textContent).toBe(
+      'Play a cue for correct and incorrect answers',
+    );
+  });
+
+  it('combines label and description into the accessible name', () => {
+    const fixture = TestBed.createComponent(RowTestHost);
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+
+    expect(button.getAttribute('aria-label')).toBe(
+      'Sound effects. Play a cue for correct and incorrect answers',
+    );
+  });
+});

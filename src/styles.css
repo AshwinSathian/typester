@@ -109,6 +109,15 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+  /* Elevation - depth for grouped/raised surfaces (settings section cards,
+     toast, dialog, the segmented control's selected pill) so "raised" reads
+     as raised, not just a different fill. One scale for both themes -
+     what conveys elevation is the surface-fill step (surface-raised vs
+     surface), not the shadow's exact color. */
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 8%);
+  --shadow-md: 0 4px 16px oklch(0% 0 0 / 12%);
+  --shadow-lg: 0 8px 32px oklch(0% 0 0 / 20%);
+
   color-scheme: light;
 }
 
@@ -193,6 +202,10 @@
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
 }
 
 html,

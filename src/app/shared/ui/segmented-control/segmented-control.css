@@ -29,8 +29,40 @@
 .app-segmented__option--selected {
   background: var(--color-surface);
   color: var(--color-text);
-  box-shadow: 0 1px 2px oklch(0% 0 0 / 10%);
+  box-shadow: var(--shadow-sm);
   animation: app-segmented-settle var(--duration-fast) var(--ease-spring);
+}
+
+/* Card variant: taller icon+label choices instead of a compact pill row -
+   see SegmentedControl's doc comment for when this is worth reaching for. */
+.app-segmented--card {
+  display: flex;
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  gap: var(--space-2);
+}
+
+.app-segmented__option--card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 4.5rem;
+  padding: var(--space-3) var(--space-2);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  font-weight: 500;
+}
+
+.app-segmented__option--card.app-segmented__option--selected {
+  border-color: var(--color-accent);
+  background: color-mix(in oklch, var(--color-accent) 12%, var(--color-surface-raised));
+  color: var(--color-accent);
+  box-shadow: none;
 }
 
 @keyframes app-segmented-settle {

@@ -1,5 +1,5 @@
 .settings {
-  max-width: 24rem;
+  max-width: 28rem;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -13,55 +13,121 @@
   margin: 0;
 }
 
-.settings__field {
+.settings__section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  animation: settings-section-in var(--duration-base) var(--ease-standard) backwards;
 }
 
-.settings__field--row {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+.settings__section:nth-of-type(2) {
+  animation-delay: 60ms;
+}
+.settings__section:nth-of-type(3) {
+  animation-delay: 120ms;
 }
 
-.settings__field label,
-.settings__field-label {
-  font-weight: 600;
+@keyframes settings-section-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings__section-label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.settings__card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.settings__card-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.settings__card-row--divider {
+  border-top: 1px solid var(--color-border);
+}
+
+.settings__row-label {
   font-size: var(--text-sm);
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
-.settings__field input {
+.settings__option-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.settings__duration-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.settings__duration-field input {
+  width: 6rem;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background: var(--color-surface-raised);
   color: var(--color-text);
   font-family: var(--font-ui);
   font-size: var(--text-base);
   /* Number inputs keep their native spinner arrows by default, which looks
-     out of place next to the segmented controls/toggle above - dropped in
-     favor of plain up/down arrow keys, still fully functional. */
+     out of place next to the card pickers/toggle above - dropped in favor
+     of plain up/down arrow keys, still fully functional. */
   appearance: textfield;
   transition:
     border-color var(--duration-instant) var(--ease-standard),
     box-shadow var(--duration-instant) var(--ease-standard);
 }
 
-.settings__field input::-webkit-outer-spin-button,
-.settings__field input::-webkit-inner-spin-button {
+.settings__duration-field input::-webkit-outer-spin-button,
+.settings__duration-field input::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
 }
 
-.settings__field input:focus-visible {
+.settings__duration-field input:focus-visible {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-accent) 25%, transparent);
+}
+
+.settings__duration-unit {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
 }
 
 .settings__error {
   color: var(--color-danger);
   font-size: var(--text-xs);
+  margin: 0;
+}
+
+.settings__footnote {
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
   margin: 0;
 }

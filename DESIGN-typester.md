@@ -126,6 +126,12 @@ card surfaces):
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1.25rem;
+
+  /* Elevation - one scale for both themes; what conveys "raised" is the
+     surface-fill step (surface-raised vs surface), not the shadow color. */
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 8%);
+  --shadow-md: 0 4px 16px oklch(0% 0 0 / 12%);
+  --shadow-lg: 0 8px 32px oklch(0% 0 0 / 20%);
 }
 ```
 
@@ -183,14 +189,15 @@ firing from a backgrounded tab reads as a bug, not a feature).
 Each is a standalone Angular component, signal `input()`/`output()` only, no
 `@Input()`/`@Output()` decorators, styled entirely from tokens:
 
-| Component          | Behavior spec                                                                                                                                                                                                                                                        |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Button`           | Variants: primary (accent fill), secondary (outline), ghost (text-only, used for "return to menu"). Press state scales to 97% over `--duration-instant`. Focus-visible ring uses `--color-accent` at 2px offset — never removed, only restyled.                      |
-| `SegmentedControl` | Used for difficulty/mode/duration pickers. Full keyboard support: arrow keys move selection, Enter/Space confirms. Selected segment slides via a `layoutId`-style shared transition (CSS `transform`, not layout-triggering properties).                             |
-| `StatBadge`        | Label + number (score, WPM, accuracy, streak). Number changes animate via a brief scale-pop (`--ease-spring`) on update, not a re-render flash.                                                                                                                      |
-| `TimerRing`        | SVG circular countdown, `stroke-dashoffset` driven by a signal `computed()` from remaining time — no `setInterval` DOM writes (fixes legacy defect #1). Ring color shifts from `--color-accent` → `--color-warning` at 20% time remaining → `--color-danger` at 10%. |
-| `Toast`            | Non-blocking transient message (e.g. "Settings saved"). `role="status"`, `aria-live="polite"`, auto-dismiss 3s, dismissible early via Escape/click.                                                                                                                  |
-| `Dialog`           | Uses the native `<dialog>` element (`showModal()`) for confirmation/help overlays — free focus-trapping and Escape-to-close from the platform, no custom a11y reimplementation needed.                                                                               |
+| Component          | Behavior spec                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Button`           | Variants: primary (accent fill), secondary (outline), ghost (text-only, used for "return to menu"). Press state scales to 97% over `--duration-instant`. Focus-visible ring uses `--color-accent` at 2px offset — never removed, only restyled.                                                                                                                                                           |
+| `SegmentedControl` | Used for difficulty/mode/duration pickers. Full keyboard support: arrow keys move selection, Enter/Space confirms. Selected segment settles with a spring pop (CSS `transform`, not layout-triggering properties). `variant="card"` + an `optionTemplate` renders taller icon+label choice cards instead of the compact pill (Settings' Theme/Motion) — same accessible radiogroup underneath either way. |
+| `Toggle`           | `role="switch"` button, not a restyled checkbox. Optional `label`/`description` render a full settings-row (text leading, switch trailing); bare (icon-only) usage falls back to `ariaLabel`.                                                                                                                                                                                                             |
+| `StatBadge`        | Label + number (score, WPM, accuracy, streak). Number changes animate via a brief scale-pop (`--ease-spring`) on update, not a re-render flash.                                                                                                                                                                                                                                                           |
+| `TimerRing`        | SVG circular countdown, `stroke-dashoffset` driven by a signal `computed()` from remaining time — no `setInterval` DOM writes (fixes legacy defect #1). Ring color shifts from `--color-accent` → `--color-warning` at 20% time remaining → `--color-danger` at 10%.                                                                                                                                      |
+| `Toast`            | Non-blocking transient message (e.g. "Settings saved"). `role="status"`, `aria-live="polite"`, auto-dismiss 3s, dismissible early via Escape/click.                                                                                                                                                                                                                                                       |
+| `Dialog`           | Uses the native `<dialog>` element (`showModal()`) for confirmation/help overlays — free focus-trapping and Escape-to-close from the platform, no custom a11y reimplementation needed. Uses `--shadow-lg` for depth against the backdrop.                                                                                                                                                                 |
 
 ## Screens
 
@@ -235,7 +242,7 @@ Each is a standalone Angular component, signal `input()`/`output()` only, no
 - Three actions: "Play Again" (same config, restarts immediately), "Share"
   (see below), and "Menu" (ghost button, returns home).
 - **Share**: composes `"Scored {score} pts at {wpm} WPM on Typester ({mode}/
-  {difficulty}) — {url}"`. Calls `navigator.share()` when available (mobile
+{difficulty}) — {url}"`. Calls `navigator.share()` when available (mobile
   Safari/Chrome); falls back to `navigator.clipboard.writeText()` plus a
   `Toast` ("Copied to clipboard") when the Web Share API isn't present
   (most desktop browsers). No image/canvas rendering — text only, kept
@@ -266,12 +273,23 @@ replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
 
 ### Settings
 
-- Signal-Forms-backed list: Theme (light/dark/system), Sound (on/off),
-  Reduced Motion (on/off/system — mirrors `prefers-reduced-motion` but
-  allows an explicit override), Quick Play duration (number input,
-  15–300s). Every field persists on change (no separate "Save" button —
-  this directly fixes legacy defect #4, where Settings never actually saved
-  anything).
+- Grouped into labeled sections (Appearance, Sound, Gameplay), each an
+  elevated card (`--shadow-sm`, `--color-border`) under a small uppercase
+  eyebrow label — fields read as a designed surface, not a loose stack of
+  form controls.
+- Appearance: Theme (light/dark/system) and Motion (full/reduced/system —
+  mirrors `prefers-reduced-motion` but allows an explicit override) are
+  `SegmentedControl` `variant="card"` icon+label choices (sun/moon/monitor;
+  bolt/pause/monitor), not plain dropdowns or a bare pill row.
+- Sound is a `Toggle` with a label _and_ a one-line description of what it
+  does, not a bare "Sound" checkbox.
+- Quick Play duration (number input, 15–300s) is the one field still backed
+  by Signal Forms, since it's the only one with a real validation
+  constraint; Theme/Motion/Sound are plain signals (no different from
+  Home's difficulty/duration pickers).
+- Every field persists on change (no separate "Save" button — this directly
+  fixes legacy defect #4, where Settings never actually saved anything); a
+  quiet footnote states this explicitly rather than leaving it implicit.
 
 ### Help
 

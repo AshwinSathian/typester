@@ -129,23 +129,23 @@ for releases.
 
 ### Component inventory
 
-| Component                                                            | New/Modified                       | Notes                                                                                   |
-| -------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------- |
-| `src/app/core/models/*`                                              | New (folder scaffolded, files TBD) | `Word`, `Difficulty`, `GameConfig`, `GameResult`, `Settings`, `Stats` types             |
+| Component                                                            | New/Modified                       | Notes                                                                                                     |
+| -------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `src/app/core/models/*`                                              | New (folder scaffolded, files TBD) | `Word`, `Difficulty`, `GameConfig`, `GameResult`, `Settings`, `Stats` types                               |
 | `src/app/core/services/game-engine.ts`                               | New                                | Pure TS, zero Angular imports — word draw, scoring, combo multiplier, WPM/accuracy, session state machine |
-| `src/app/core/services/word-source.service.ts`                       | New                                | Fetches per-round words from Datamuse (`HttpClient`, timeout+validate), falls back to bundled word bank |
-| `src/app/core/services/storage.service.ts`                           | New                                | Versioned `localStorage` wrapper for settings/stats/best-scores, `storage`-event reconciliation |
-| `src/app/core/services/sound.service.ts`                             | New                                | Web Audio API synthesized SFX, no shipped audio assets                                  |
-| `src/app/core/guards/game-config.guard.ts`                           | New                                | Functional `CanActivateFn` validating `/play/:mode/:difficulty/:duration`               |
-| `src/app/shared/data/word-bank.ts`                                   | New                                | ~150+ curated words per tier — fallback source, replaces legacy's 10                    |
-| `src/app/shared/ui/*`                                                | New                                | button, segmented-control, stat-badge, timer-ring, toast, dialog                        |
-| `src/app/features/home/*`                                            | New                                | Landing + mode/difficulty picker                                                        |
-| `src/app/features/game/*`                                            | New                                | Core gameplay screen                                                                    |
-| `src/app/features/results/*`                                         | New                                | Post-round summary                                                                      |
-| `src/app/features/settings/*`                                        | New                                | Signal-Forms-backed, persists                                                           |
-| `src/app/features/help/*`                                            | New                                | Static FAQ                                                                              |
-| `angular.json`, `package.json`, `tsconfig*.json`, `eslint.config.js` | Done                                | Workspace scaffold                                                                      |
-| `ops/*`                                                              | Done                                | Caddyfile, cloudflared config template, launchd plists, deploy script, runbook          |
+| `src/app/core/services/word-source.service.ts`                       | New                                | Fetches per-round words from Datamuse (`HttpClient`, timeout+validate), falls back to bundled word bank   |
+| `src/app/core/services/storage.service.ts`                           | New                                | Versioned `localStorage` wrapper for settings/stats/best-scores, `storage`-event reconciliation           |
+| `src/app/core/services/sound.service.ts`                             | New                                | Web Audio API synthesized SFX, no shipped audio assets                                                    |
+| `src/app/core/guards/game-config.guard.ts`                           | New                                | Functional `CanActivateFn` validating `/play/:mode/:difficulty/:duration`                                 |
+| `src/app/shared/data/word-bank.ts`                                   | New                                | ~150+ curated words per tier — fallback source, replaces legacy's 10                                      |
+| `src/app/shared/ui/*`                                                | New                                | button, segmented-control, stat-badge, timer-ring, toast, dialog                                          |
+| `src/app/features/home/*`                                            | New                                | Landing + mode/difficulty picker                                                                          |
+| `src/app/features/game/*`                                            | New                                | Core gameplay screen                                                                                      |
+| `src/app/features/results/*`                                         | New                                | Post-round summary                                                                                        |
+| `src/app/features/settings/*`                                        | New                                | Signal-Forms-backed, persists                                                                             |
+| `src/app/features/help/*`                                            | New                                | Static FAQ                                                                                                |
+| `angular.json`, `package.json`, `tsconfig*.json`, `eslint.config.js` | Done                               | Workspace scaffold                                                                                        |
+| `ops/*`                                                              | Done                               | Caddyfile, cloudflared config template, launchd plists, deploy script, runbook                            |
 
 ### Data flow (a single round)
 
@@ -282,15 +282,15 @@ this directory picks it up without affecting sibling projects.
 
 ## 😱 Risks
 
-| Risk                                                                                                                   | Likelihood | Impact | Score | Mitigation                                                                                                                                                                                | Owner         |
-| ---------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| Home internet/power outage takes the site offline                                                                      | Med        | Med    | 4     | Accepted for a single-instance deployment; `ops/README.md` documents recovery steps; no redundant hosting per constraints                                                                         | Ashwin        |
-| Design scope ("Apple-grade") creeps without a dedicated design skill/tool                                              | Med        | Med    | 4     | `DESIGN-typester.md` locks concrete tokens/specs before Phase 3 starts; each screen has a binary AC, not a vibe check                                                                     | Engineering   |
-| Zoneless/signals ecosystem edge cases with any future third-party lib                                                  | Low        | Med    | 3     | Dependency footprint kept minimal; any new runtime dependency must be verified zoneless-compatible before adding                                                                          | Engineering   |
-| Word bank curation: duplicates, ambiguous difficulty, inappropriate words                                              | Med        | Low    | 2     | Unit test enforces uniqueness across tiers; manual curation review before Phase 2 exit                                                                                                    | Engineering   |
-| Low-severity dev-only npm audit findings linger (`@babel/core` sourcemap read, Windows-only `esbuild` dev-server read) | Low        | Low    | 1     | Both are dev-time-only and non-exploitable on this project's macOS/localhost-only dev server; re-run `npm audit` on every Angular minor bump rather than force-downgrade `@angular/build` | Ashwin        |
-| `launchd` services silently stop restarting after a macOS/Homebrew upgrade changes binary paths                        | Med        | Med    | 4     | `ops/README.md` documents the exact reinstall steps; consider a cron healthcheck as follow-up (not committed to this RFC)                                                                 | Ashwin        |
-| Assumed `ashwinsathian.com` is already on Cloudflare's free plan/nameservers                                           | Low        | High   | 3     | Must be confirmed before Phase 4 ops execution — see Open Questions                                                                                                                       | Ashwin        |
+| Risk                                                                                                                   | Likelihood | Impact | Score | Mitigation                                                                                                                                                                                | Owner       |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Home internet/power outage takes the site offline                                                                      | Med        | Med    | 4     | Accepted for a single-instance deployment; `ops/README.md` documents recovery steps; no redundant hosting per constraints                                                                 | Ashwin      |
+| Design scope ("Apple-grade") creeps without a dedicated design skill/tool                                              | Med        | Med    | 4     | `DESIGN-typester.md` locks concrete tokens/specs before Phase 3 starts; each screen has a binary AC, not a vibe check                                                                     | Engineering |
+| Zoneless/signals ecosystem edge cases with any future third-party lib                                                  | Low        | Med    | 3     | Dependency footprint kept minimal; any new runtime dependency must be verified zoneless-compatible before adding                                                                          | Engineering |
+| Word bank curation: duplicates, ambiguous difficulty, inappropriate words                                              | Med        | Low    | 2     | Unit test enforces uniqueness across tiers; manual curation review before Phase 2 exit                                                                                                    | Engineering |
+| Low-severity dev-only npm audit findings linger (`@babel/core` sourcemap read, Windows-only `esbuild` dev-server read) | Low        | Low    | 1     | Both are dev-time-only and non-exploitable on this project's macOS/localhost-only dev server; re-run `npm audit` on every Angular minor bump rather than force-downgrade `@angular/build` | Ashwin      |
+| `launchd` services silently stop restarting after a macOS/Homebrew upgrade changes binary paths                        | Med        | Med    | 4     | `ops/README.md` documents the exact reinstall steps; consider a cron healthcheck as follow-up (not committed to this RFC)                                                                 | Ashwin      |
+| Assumed `ashwinsathian.com` is already on Cloudflare's free plan/nameservers                                           | Low        | High   | 3     | Must be confirmed before Phase 4 ops execution — see Open Questions                                                                                                                       | Ashwin      |
 
 ## 🔗 Dependencies
 
@@ -435,11 +435,11 @@ Additional decisions made in this pass (user-directed):
 
 ## Note on live word source vs. "no third-party services"
 
-The RFC's Non-Goals still hold — no backend *we operate*, no accounts, no
+The RFC's Non-Goals still hold — no backend _we operate_, no accounts, no
 analytics/tracking scripts. The Datamuse API is a read-only, keyless, public
 GET endpoint the client calls directly (like a font CDN would be, except it
 isn't one — no persistent connection, no cookies, no tracking parameters).
-Because Phase 1 explicitly rejected a *shipped* runtime word/audio dependency
+Because Phase 1 explicitly rejected a _shipped_ runtime word/audio dependency
 (D5/D7) purely to preserve offline play, and this decision reinstates a live
 fetch, the offline guarantee now depends entirely on the fallback path
 actually working — this is why the fallback isn't optional and is covered by

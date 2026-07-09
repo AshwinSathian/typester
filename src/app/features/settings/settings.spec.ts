@@ -80,6 +80,31 @@ describe('Settings', () => {
     expect(fixture.nativeElement.querySelector('.settings__error')).not.toBeNull();
   });
 
+  it('groups fields into labeled sections with an icon per Theme/Motion option', () => {
+    const fixture = TestBed.createComponent(Settings);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const sectionLabels = Array.from(el.querySelectorAll('.settings__section-label')).map((n) =>
+      n.textContent?.trim(),
+    );
+    expect(sectionLabels).toEqual(['Appearance', 'Sound', 'Gameplay']);
+
+    const themeGroup = radioGroup(el, 'Theme');
+    for (const button of Array.from(themeGroup.querySelectorAll('button'))) {
+      expect(button.querySelector('svg.settings__option-icon')).not.toBeNull();
+    }
+  });
+
+  it('shows a description alongside the Sound effects toggle label', () => {
+    const fixture = TestBed.createComponent(Settings);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('.app-toggle-row__label')?.textContent).toBe('Sound effects');
+    expect(el.querySelector('.app-toggle-row__description')?.textContent).toContain('cue');
+  });
+
   it('navigates home on Back to Menu', () => {
     const fixture = TestBed.createComponent(Settings);
     const router = TestBed.inject(Router);
