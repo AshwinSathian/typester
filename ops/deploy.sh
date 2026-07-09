@@ -5,6 +5,7 @@
 # back by re-pointing the symlink — no rebuild required.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RELEASES_DIR="$HOME/.typester/releases"
 KEEP=5
 STAMP="$(date +%Y%m%d%H%M%S)"
@@ -19,6 +20,11 @@ cp -R dist/typester/browser "$TARGET/browser"
 ln -sfn "$TARGET" "$RELEASES_DIR/current"
 
 echo "Released $STAMP -> $RELEASES_DIR/current"
+
+# Keep the deployed Caddyfile in sync with the repo's copy, so an edit to
+# ops/Caddyfile actually takes effect on the next deploy instead of silently
+# requiring a separate manual `cp` step.
+cp "$SCRIPT_DIR/Caddyfile" "$HOME/.typester/Caddyfile"
 
 # Prune old releases, keeping the newest $KEEP.
 cd "$RELEASES_DIR"

@@ -86,11 +86,14 @@ caddy reload --config ~/.typester/Caddyfile --adapter caddyfile
 
 ## Updating the tunnel/Caddy config later
 
-Edit `ops/Caddyfile` or `ops/cloudflared/config.yml.example` in the repo, then
-re-copy to `~/.typester/Caddyfile` / `~/.cloudflared/typester-config.yml` and:
+`ops/deploy.sh` copies `ops/Caddyfile` to `~/.typester/Caddyfile` and reloads
+Caddy on every run, so an edit to `ops/Caddyfile` takes effect on the next
+`./ops/deploy.sh` automatically. `ops/cloudflared/config.yml.example` isn't
+auto-synced (it holds the tunnel's own credentials-file path, generated
+once) - edit `~/.cloudflared/typester-config.yml` directly, or re-copy the
+example and re-apply the `<TUNNEL_ID>` substitution, then:
 
 ```sh
-caddy reload --config ~/.typester/Caddyfile --adapter caddyfile
 launchctl kickstart -k gui/$(id -u)/com.ashwinsathian.typester.cloudflared
 ```
 
@@ -124,3 +127,34 @@ applied in `ops/Caddyfile`) is a port-only address with an explicit bind:
 
 Verify with `curl -H "Host: typester.ashwinsathian.com" http://localhost:8787/`
 locally before assuming the problem is DNS/tunnel propagation.
+
+## Troubleshooting: the app loads but nothing works (blank word, broken deep links)
+
+`curl` only checks that HTML comes back with a 200 - it doesn't execute
+JavaScript or enforce CSP the way a real browser does, so it can look like
+everything's fine while the actual app is broken for every visitor. Load
+the site in a real browser (or drive one with Playwright) and check the
+console. Two CSP directives are easy to get wrong for an Angular SPA
+specifically:
+
+- **`base-uri 'none'`** blocks Angular's own `<base href="/">` tag. Without
+  it taking effect, every relative asset URL resolves against the *current
+  route's path* instead of root - harmless on `/` (root and route happen to
+  coincide) but breaks every asset load the moment someone deep-links into
+  a non-root route (`/play/*`, a shared results-style link, or just
+  refreshing on any page other than `/`). Use `base-uri 'self'`.
+- **`style-src`/`script-src` without `'unsafe-inline'`** blocks Angular's
+  SSR-emitted critical-CSS `<style>` tag and the JSON-LD `<script
+  type="application/ld+json">` block in `index.html`. Neither renders any
+  user-controlled data, so `'unsafe-inline'` here doesn't reopen an XSS hole
+  the way it would for markup built from request input.
+- Also add `connect-src` for anything the app fetches at runtime -
+  `default-src 'self'` does **not** cover `fetch()`/XHR on its own. This app
+  needs `https://api.datamuse.com` for `word-source.service.ts`'s live word
+  requests; forgetting this silently degrades every round to the offline
+  word-bank fallback with no visible error.
+
+These three were all caught by loading the live site in a real headless
+browser and inspecting `page.on('console', ...)` for CSP violations - not
+by `curl`, and not by the unit/component test suite, which mocks HTTP
+entirely.

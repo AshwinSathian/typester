@@ -23,7 +23,19 @@
 	# Defense-in-depth headers. Angular ships hashed, non-inline bundles, so a
 	# strict CSP with no 'unsafe-inline'/'unsafe-eval' is achievable.
 	header {
-		Content-Security-Policy "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; style-src 'self'; script-src 'self'"
+		# base-uri must be 'self', not 'none': Angular's own <base href="/">
+		# tag needs to be allowed to take effect, or the browser ignores it and
+		# resolves every asset path relative to the current route instead of
+		# root - breaks every deep link into a non-root route (e.g. /play/*,
+		# a shared /results-equivalent link). style-src/script-src need
+		# 'unsafe-inline' for Angular's SSR-emitted critical-CSS <style> and
+		# the JSON-LD <script type="application/ld+json"> block in index.html -
+		# there's no user-controlled data rendered into either, so the usual
+		# XSS risk 'unsafe-inline' introduces doesn't apply here. Verified
+		# against a real browser (Playwright), not just curl - this exact
+		# combination is also what this account's other live app needs for
+		# its own SSR hydration output.
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.datamuse.com"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
