@@ -2,7 +2,7 @@
 ## Caddy terminates plain HTTP on localhost only; Cloudflare Tunnel handles the
 ## public TLS edge, so Caddy does not need (and must not open) a public port.
 
-localhost:8787 {
+http://localhost:8787 {
 	root * {$TYPESTER_RELEASE:/opt/typester/releases/current}/browser
 	encode zstd gzip
 	file_server
