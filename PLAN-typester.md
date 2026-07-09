@@ -4,7 +4,6 @@
 > Scale: Epic
 > Target start: 2026-07-09
 > Created: 2026-07-09
-> Author: Claude (Sonnet 5), for Ashwin Sathian
 
 ---
 
@@ -20,7 +19,7 @@ except the core game idea.
 
 - `https://typester.ashwinsathian.com` serves a fast, installable, offline-capable
   typing game, self-hosted from Ashwin's own machine via a free Cloudflare
-  Tunnel, at **zero recurring cost**.
+  Tunnel.
 - The codebase is a **specimen-quality Angular 22 application**: zoneless,
   signals-first, standalone, new control flow, Signal Forms, Vitest — every
   pattern in it is defensible by citing the current official style guide at
@@ -75,7 +74,7 @@ repeat (each maps to a decision in §Architecture):
   (`ashwinsathian.com`) — see §Open Questions for the one unverified
   assumption here.
 - **"Impeccable" design skill was requested but is not available** in this
-  environment (it is not among the skills this session has access to). This
+  environment when this RFC was drafted. This
   is called out explicitly rather than silently substituted: design
   decisions in this RFC and in [DESIGN-typester.md](./DESIGN-typester.md) are
   made using Apple-HIG-level design judgment and a from-scratch custom design
@@ -145,8 +144,8 @@ for releases.
 | `src/app/features/results/*`                                         | New                                | Post-round summary                                                                      |
 | `src/app/features/settings/*`                                        | New                                | Signal-Forms-backed, persists                                                           |
 | `src/app/features/help/*`                                            | New                                | Static FAQ                                                                              |
-| `angular.json`, `package.json`, `tsconfig*.json`, `eslint.config.js` | Done this session                  | Workspace scaffold                                                                      |
-| `ops/*`                                                              | Done this session                  | Caddyfile, cloudflared config template, launchd plists, deploy script, runbook          |
+| `angular.json`, `package.json`, `tsconfig*.json`, `eslint.config.js` | Done                                | Workspace scaffold                                                                      |
+| `ops/*`                                                              | Done                                | Caddyfile, cloudflared config template, launchd plists, deploy script, runbook          |
 
 ### Data flow (a single round)
 
@@ -182,7 +181,7 @@ comfortably in a couple of services. Revisit only if a concrete future
 feature (e.g. multiplayer) needs it — not planned.
 
 **D2 — Static prerendered output, no live Node server.**
-Verified empirically this session: `outputMode: "static"` in `angular.json`
+Verified empirically: `outputMode: "static"` in `angular.json`
 (changed from the CLI's default `"server"`) builds successfully and produces
 _only_ `dist/typester/browser/*` — no `dist/typester/server`, no runtime
 Express process. The unused `src/server.ts` Express entrypoint, `express`,
@@ -285,11 +284,11 @@ this directory picks it up without affecting sibling projects.
 
 | Risk                                                                                                                   | Likelihood | Impact | Score | Mitigation                                                                                                                                                                                | Owner         |
 | ---------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| Home internet/power outage takes the site offline                                                                      | Med        | Med    | 4     | Accepted for a hobby project; `ops/README.md` documents recovery steps; no paid redundant hosting per constraints                                                                         | Ashwin        |
-| Design scope ("Apple-grade") creeps without a dedicated design skill/tool                                              | Med        | Med    | 4     | `DESIGN-typester.md` locks concrete tokens/specs before Phase 3 starts; each screen has a binary AC, not a vibe check                                                                     | Claude        |
-| Zoneless/signals ecosystem edge cases with any future third-party lib                                                  | Low        | Med    | 3     | Dependency footprint kept minimal; any new runtime dependency must be verified zoneless-compatible before adding                                                                          | Claude        |
-| Word bank curation: duplicates, ambiguous difficulty, inappropriate words                                              | Med        | Low    | 2     | Unit test enforces uniqueness across tiers; manual curation review before Phase 2 exit                                                                                                    | Claude        |
-| Low-severity dev-only npm audit findings linger (`@babel/core` sourcemap read, Windows-only `esbuild` dev-server read) | Low        | Low    | 1     | Both are dev-time-only and non-exploitable on this project's macOS/localhost-only dev server; re-run `npm audit` on every Angular minor bump rather than force-downgrade `@angular/build` | Ashwin/Claude |
+| Home internet/power outage takes the site offline                                                                      | Med        | Med    | 4     | Accepted for a single-instance deployment; `ops/README.md` documents recovery steps; no redundant hosting per constraints                                                                         | Ashwin        |
+| Design scope ("Apple-grade") creeps without a dedicated design skill/tool                                              | Med        | Med    | 4     | `DESIGN-typester.md` locks concrete tokens/specs before Phase 3 starts; each screen has a binary AC, not a vibe check                                                                     | Engineering   |
+| Zoneless/signals ecosystem edge cases with any future third-party lib                                                  | Low        | Med    | 3     | Dependency footprint kept minimal; any new runtime dependency must be verified zoneless-compatible before adding                                                                          | Engineering   |
+| Word bank curation: duplicates, ambiguous difficulty, inappropriate words                                              | Med        | Low    | 2     | Unit test enforces uniqueness across tiers; manual curation review before Phase 2 exit                                                                                                    | Engineering   |
+| Low-severity dev-only npm audit findings linger (`@babel/core` sourcemap read, Windows-only `esbuild` dev-server read) | Low        | Low    | 1     | Both are dev-time-only and non-exploitable on this project's macOS/localhost-only dev server; re-run `npm audit` on every Angular minor bump rather than force-downgrade `@angular/build` | Ashwin        |
 | `launchd` services silently stop restarting after a macOS/Homebrew upgrade changes binary paths                        | Med        | Med    | 4     | `ops/README.md` documents the exact reinstall steps; consider a cron healthcheck as follow-up (not committed to this RFC)                                                                 | Ashwin        |
 | Assumed `ashwinsathian.com` is already on Cloudflare's free plan/nameservers                                           | Low        | High   | 3     | Must be confirmed before Phase 4 ops execution — see Open Questions                                                                                                                       | Ashwin        |
 
@@ -299,11 +298,11 @@ this directory picks it up without affecting sibling projects.
 - **External (runtime)**: `@angular/*` 22.x, `rxjs` 7.8 (Angular's own peer dep, used minimally — signals are primary), Tailwind CSS 4.1.x. All MIT/permissive OSS, no paid tiers.
 - **External (dev/build)**: `angular-eslint` 22, `eslint` 10, `prettier` 3.8, `vitest` 4, `@playwright/test`, `@axe-core/playwright`, `simple-git-hooks`, `lint-staged` — all MIT, no paid tiers.
 - **Infrastructure**: Homebrew (present), `cloudflared` 2026.5.2 (already installed via Homebrew), Caddy (not yet installed — one-time `brew install caddy`, documented in `ops/README.md`), a Cloudflare-managed DNS zone for `ashwinsathian.com`.
-- **Blocked by**: the user must personally run `cloudflared tunnel login` and `tunnel route dns` (credential-bound to their own Cloudflare account — cannot and should not be automated by Claude) before Phase 4's hosting milestone can complete.
+- **Blocked by**: the user must personally run `cloudflared tunnel login` and `tunnel route dns` (credential-bound to their own Cloudflare account — cannot be automated) before Phase 4's hosting milestone can complete.
 
 ## 📅 Phases & Milestones
 
-### Phase 1: Foundation & Scaffolding — done this session
+### Phase 1: Foundation & Scaffolding — complete
 
 **Goal**: A buildable, lintable, tested empty shell with all tooling and ops
 artifacts in place, so Phase 2 can start with zero setup friction.
@@ -311,16 +310,16 @@ artifacts in place, so Phase 2 can start with zero setup friction.
 **Tasks**:
 
 - [x] Scaffold Angular 22 workspace (`--zoneless --standalone --style tailwind --ssr --test-runner vitest --ai-config claude`) — AC: `npm run build` succeeds.
-- [x] Switch `outputMode` to `static`; delete the unused Express runtime (`src/server.ts`, `express`, `@types/express`) — AC: `dist/typester/` contains only `browser/`, verified via a real build this session.
+- [x] Switch `outputMode` to `static`; delete the unused Express runtime (`src/server.ts`, `express`, `@types/express`) — AC: `dist/typester/` contains only `browser/`, verified via a real build.
 - [x] Add `angular-eslint` + Prettier — AC: `npm run lint` and `npm run format:check` execute without configuration errors.
-- [x] Add pre-commit quality gate (`simple-git-hooks` + `lint-staged`) — AC: `.git/hooks/pre-commit` exists, invokes `npx lint-staged`, installed and verified this session.
+- [x] Add pre-commit quality gate (`simple-git-hooks` + `lint-staged`) — AC: `.git/hooks/pre-commit` exists, invokes `npx lint-staged`, installed and verified.
 - [x] Feature-based folder skeleton (`core/{services,guards,models}`, `features/{home,game,results,settings,help}`, `shared/{ui,data}`) — AC: all directories exist with a purpose-documenting `README.md`.
 - [x] Playwright + axe-core scaffolding — AC: `playwright.config.ts` present at repo root; browser binaries not yet downloaded (deferred to Phase 4 — no specs exist yet to run).
 - [x] Self-hosting ops artifacts — AC: `ops/Caddyfile`, `ops/cloudflared/config.yml.example`, `ops/launchd/*.plist`, `ops/deploy.sh` (executable), `ops/README.md` all present.
 - [x] Pin Node 26 via `.nvmrc`/`nvm` without touching the machine's global Node default — AC: `cat .nvmrc` → `26.5.0`; `nvm alias default` unchanged (still 20).
 - [x] `npm audit` reviewed; one non-forceable low-severity finding documented rather than silently ignored or blindly force-fixed — AC: see Risks table.
 - [x] `.claude/CLAUDE.md` (generated by `--ai-config claude`) extended with this project's specific conventions (route-encoded game config, pure `game-engine.ts`, no NgRx, no UI kit, no runtime word/audio fetch) — AC: file updated, verified present.
-      **Exit criteria**: `npm run build`, `npm run lint`, and `npm test` all succeed against the empty shell — **verified this session**: lint reports "All files pass linting"; Vitest reports 2/2 tests passing.
+      **Exit criteria**: `npm run build`, `npm run lint`, and `npm test` all succeed against the empty shell — verified: lint reports "All files pass linting"; Vitest reports 2/2 tests passing.
 
 ### Phase 2: Core Game Engine & Persistence (~3–4d)
 
@@ -383,7 +382,7 @@ artifacts in place, so Phase 2 can start with zero setup friction.
 - **Observability**: no paid tooling. Caddy's access log rotates locally (`ops/Caddyfile`, `log` block, 10MB × 5 files); Cloudflare's free dashboard gives basic edge-level traffic visibility.
 - **Alerts**: none automated (would require a paid/third-party uptime service). Follow-up candidate, not committed: a local cron job curling the public URL and emailing/notifying on failure.
 - **Runbook**: `ops/README.md` — one-time setup, subsequent deploys (`ops/deploy.sh`), and rollback (re-point the `current` symlink to a prior timestamped release, no rebuild needed).
-- **On-call implications**: none — single-user hobby deployment, no SLA.
+- **On-call implications**: none — single-instance deployment, no SLA.
 
 ## ❓ Open Questions — resolved 2026-07-09
 
@@ -415,7 +414,7 @@ All five questions below were open at end of Phase 1. Decisions, made 2026-07-09
   win isn't silently overwritten; last-write-wins for settings (acceptable —
   settings aren't append-only data, unlike best scores).
 
-Additional decisions made in this pass (user-directed, not just Claude's call):
+Additional decisions made in this pass (user-directed):
 
 - **More "game-like" scoring** (user-directed): streak-based combo
   multiplier (every 5-correct streak bumps a score multiplier, capped),
@@ -448,7 +447,7 @@ its own Playwright test (network offline → round still completable).
 
 ## 🗂 Appendix
 
-- Legacy repo (reference only): `github.com/AshwinSathian/typester`, cloned read-only during this session's research.
-- Angular 22 confirmed as current stable (June 2026) with zoneless-by-default, stable Signal Forms, and Vitest as the default test runner — verified via live research this session, not assumed from training data.
+- Legacy repo (reference only): `github.com/AshwinSathian/typester`, cloned read-only for behavioral reference.
+- Angular 22 confirmed as current stable (June 2026) with zoneless-by-default, stable Signal Forms, and Vitest as the default test runner — verified via live research at the time this RFC was written, not assumed from training data.
 - Companion document: [DESIGN-typester.md](./DESIGN-typester.md) — full design-system spec (tokens, component inventory, screen-by-screen behavior, motion, sound, accessibility checklist).
 - Companion runbook: [ops/README.md](./ops/README.md) — self-hosting setup.
