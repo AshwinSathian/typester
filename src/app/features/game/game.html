@@ -1,0 +1,41 @@
+<main id="main-content" class="game">
+  @if (phase() === 'loading') {
+    <p class="game__loading" role="status">Loading words…</p>
+  }
+
+  @if (phase() === 'playing' && snapshot(); as snap) {
+    <app-timer-ring
+      [remainingSeconds]="remainingSeconds()"
+      [totalSeconds]="config().durationSeconds"
+    />
+
+    <div
+      class="game__word"
+      [class.game__word--power]="snap.currentWord?.isPowerWord"
+      [class.game__word--correct]="feedback() === 'correct'"
+      [class.game__word--incorrect]="feedback() === 'incorrect'"
+    >
+      {{ snap.currentWord?.text }}
+    </div>
+
+    <input
+      #answerInput
+      class="game__input"
+      [class.game__input--correct]="feedback() === 'correct'"
+      [class.game__input--incorrect]="feedback() === 'incorrect'"
+      type="text"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      aria-label="Type the word shown above"
+      (keydown.enter)="onSubmit(answerInput)"
+    />
+
+    <div class="game__stats">
+      <app-stat-badge label="Score" [value]="snap.score" />
+      <app-stat-badge label="Streak" [value]="snap.streak" />
+    </div>
+
+    <div class="sr-only" role="status" aria-live="polite">{{ liveAnnouncement() }}</div>
+  }
+</main>

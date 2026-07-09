@@ -1,0 +1,78 @@
+.game {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-4);
+  container-type: inline-size;
+}
+
+.game__loading {
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}
+
+.game__word {
+  font-family: var(--font-mono);
+  font-size: var(--text-word);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+  transition: color var(--duration-instant) var(--ease-standard);
+}
+
+.game__word--power {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.3em;
+}
+
+.game__word--correct {
+  color: var(--color-success);
+}
+
+.game__word--incorrect {
+  color: var(--color-danger);
+}
+
+.game__input {
+  width: min(90vw, 20rem);
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  text-align: center;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color var(--duration-instant) var(--ease-standard);
+}
+
+.game__input--correct {
+  border-color: var(--color-success);
+}
+
+.game__input--incorrect {
+  border-color: var(--color-danger);
+}
+
+.game__stats {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

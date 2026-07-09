@@ -1,0 +1,51 @@
+<main id="main-content" class="home">
+  <div class="home__hero">
+    <h1 class="home__title">Typester</h1>
+    <p class="home__tagline">Type fast. Beat the clock. Chase your best score.</p>
+  </div>
+
+  <div class="home__actions">
+    <app-button variant="primary" [fullWidth]="true" (pressed)="startQuickPlay()">
+      Quick Play
+    </app-button>
+
+    <app-button
+      variant="secondary"
+      [fullWidth]="true"
+      [attr.aria-expanded]="showModePicker()"
+      aria-controls="mode-picker"
+      (pressed)="toggleModePicker()"
+    >
+      Game Modes
+    </app-button>
+
+    @if (showModePicker()) {
+      <div class="home__picker" id="mode-picker">
+        <div class="home__picker-group">
+          <span class="home__picker-label" id="difficulty-label">Difficulty</span>
+          <app-segmented-control
+            [options]="difficultyOptions"
+            [(value)]="difficulty"
+            ariaLabel="Difficulty"
+          />
+        </div>
+
+        <div class="home__picker-group">
+          <span class="home__picker-label" id="duration-label">Duration</span>
+          <app-segmented-control
+            [options]="durationOptions"
+            [(value)]="duration"
+            ariaLabel="Duration"
+          />
+        </div>
+
+        <app-button variant="primary" [fullWidth]="true" (pressed)="startTimedGame()">
+          Start
+        </app-button>
+      </div>
+    }
+
+    <app-button variant="ghost" [fullWidth]="true" (pressed)="goToHelp()">Help</app-button>
+    <app-button variant="ghost" [fullWidth]="true" (pressed)="goToSettings()">Settings</app-button>
+  </div>
+</main>
