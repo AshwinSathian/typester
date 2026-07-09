@@ -68,6 +68,8 @@
     "msgpackr-extract@3.0.4": true,
     "simple-git-hooks@2.13.1": true,
     "fsevents@2.3.2": true,
-    "esbuild@0.27.7": true
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true
   }
 }
