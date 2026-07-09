@@ -38,4 +38,5 @@
 
 .legal a {
   color: var(--color-accent);
+  text-decoration: underline;
 }

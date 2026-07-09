@@ -9,7 +9,7 @@
 }
 
 .results__badge {
-  background: var(--color-accent);
+  background: var(--color-accent-strong);
   color: white;
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);

@@ -49,8 +49,12 @@
 /* === Design tokens (DESIGN-typester.md §Tokens) === */
 :root {
   /* Brand */
-  --color-accent: oklch(64% 0.19 265);
-  --color-accent-strong: oklch(54% 0.21 265);
+  /* --color-accent: for text/links/decorative use against the page background.
+     --color-accent-strong: for filled buttons/badges with white text on top -
+     these need very different lightness to each hit 4.5:1 in their own context,
+     which is why they're separate tokens rather than one accent + a CSS filter. */
+  --color-accent: oklch(42% 0.19 265);
+  --color-accent-strong: oklch(38% 0.2 265);
 
   /* Semantic feedback */
   --color-success: oklch(70% 0.17 152);
@@ -195,4 +199,11 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/* Reserves room below every screen's content for the fixed-position
+   first-visit notice banner (app/notice-banner) so it can never overlap an
+   actionable element like a bottom button on a short viewport. */
+main#main-content {
+  padding-bottom: 10rem;
 }

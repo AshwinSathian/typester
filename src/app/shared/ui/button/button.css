@@ -31,12 +31,12 @@
 }
 
 .app-button--primary {
-  background: var(--color-accent);
+  background: var(--color-accent-strong);
   color: white;
 }
 
 .app-button--primary:hover:not(:disabled) {
-  background: var(--color-accent-strong);
+  filter: brightness(0.85);
 }
 
 .app-button--secondary {
