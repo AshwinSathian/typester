@@ -4,6 +4,16 @@ import { Router, provideRouter } from '@angular/router';
 import { StorageService } from '../../core/services/storage.service';
 import { Settings } from './settings';
 
+function radioGroup(el: HTMLElement, ariaLabel: string): HTMLElement {
+  return el.querySelector(`[role="radiogroup"][aria-label="${ariaLabel}"]`) as HTMLElement;
+}
+
+function radioButton(group: HTMLElement, label: string): HTMLButtonElement {
+  return Array.from(group.querySelectorAll('button')).find(
+    (b) => b.textContent?.trim() === label,
+  ) as HTMLButtonElement;
+}
+
 describe('Settings', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -17,17 +27,16 @@ describe('Settings', () => {
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
-    expect((el.querySelector('#theme') as HTMLSelectElement).value).toBe('dark');
-    expect((el.querySelector('#sound') as HTMLInputElement).checked).toBe(false);
+    expect(radioButton(radioGroup(el, 'Theme'), 'Dark').getAttribute('aria-checked')).toBe('true');
+    expect(el.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('false');
   });
 
   it('persists a theme change immediately, with no separate save action', () => {
     const fixture = TestBed.createComponent(Settings);
     fixture.detectChanges();
-    const select = fixture.nativeElement.querySelector('#theme') as HTMLSelectElement;
+    const el = fixture.nativeElement as HTMLElement;
 
-    select.value = 'light';
-    select.dispatchEvent(new Event('change', { bubbles: true }));
+    radioButton(radioGroup(el, 'Theme'), 'Light').click();
     fixture.detectChanges();
 
     const storage = TestBed.inject(StorageService);
@@ -37,14 +46,25 @@ describe('Settings', () => {
   it('persists a sound toggle change immediately', () => {
     const fixture = TestBed.createComponent(Settings);
     fixture.detectChanges();
-    const checkbox = fixture.nativeElement.querySelector('#sound') as HTMLInputElement;
+    const toggle = fixture.nativeElement.querySelector('[role="switch"]') as HTMLButtonElement;
 
-    checkbox.checked = false;
-    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    toggle.click();
     fixture.detectChanges();
 
     const storage = TestBed.inject(StorageService);
     expect(storage.settings().soundEnabled).toBe(false);
+  });
+
+  it('persists a motion change immediately', () => {
+    const fixture = TestBed.createComponent(Settings);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    radioButton(radioGroup(el, 'Motion'), 'Reduced').click();
+    fixture.detectChanges();
+
+    const storage = TestBed.inject(StorageService);
+    expect(storage.settings().motion).toBe('reduced');
   });
 
   it('shows a validation error when the quick play duration is out of range', () => {

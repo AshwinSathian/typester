@@ -5,18 +5,25 @@ import { gotoReady } from './helpers';
 test('settings persist across a full page reload', async ({ page }) => {
   await gotoReady(page, '/settings');
 
-  const soundCheckbox = page.locator('#sound');
-  await expect(soundCheckbox).toBeChecked();
-  await soundCheckbox.uncheck();
+  const soundToggle = page.getByRole('switch', { name: 'Sound' });
+  await expect(soundToggle).toHaveAttribute('aria-checked', 'true');
+  await soundToggle.click();
 
-  const themeSelect = page.locator('#theme');
-  await themeSelect.selectOption('dark');
+  await page
+    .getByRole('radiogroup', { name: 'Theme' })
+    .getByRole('radio', { name: 'Dark' })
+    .click();
 
   await page.reload();
   await page.waitForLoadState('networkidle');
 
-  await expect(page.locator('#sound')).not.toBeChecked();
-  await expect(page.locator('#theme')).toHaveValue('dark');
+  await expect(page.getByRole('switch', { name: 'Sound' })).toHaveAttribute(
+    'aria-checked',
+    'false',
+  );
+  await expect(
+    page.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name: 'Dark' }),
+  ).toHaveAttribute('aria-checked', 'true');
 });
 
 test('an out-of-range Quick Play duration shows a validation error', async ({ page }) => {

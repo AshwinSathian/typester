@@ -4,17 +4,18 @@ import { gotoReady } from './helpers';
 
 test('switching theme in Settings applies data-theme and persists it', async ({ page }) => {
   await gotoReady(page, '/settings');
+  const themeGroup = page.getByRole('radiogroup', { name: 'Theme' });
 
-  await page.locator('#theme').selectOption('dark');
+  await themeGroup.getByRole('radio', { name: 'Dark' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
   await page.reload();
   await page.waitForLoadState('networkidle');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
-  await page.locator('#theme').selectOption('light');
+  await themeGroup.getByRole('radio', { name: 'Light' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 
-  await page.locator('#theme').selectOption('system');
+  await themeGroup.getByRole('radio', { name: 'System' }).click();
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.+/);
 });

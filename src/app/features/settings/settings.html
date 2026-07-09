@@ -2,31 +2,18 @@
   <h1 class="settings__title">Settings</h1>
 
   <div class="settings__field">
-    <label for="theme">Theme</label>
-    <select id="theme" [formField]="settingsForm.theme" (change)="onThemeChange($event)">
-      <option value="system">System</option>
-      <option value="light">Light</option>
-      <option value="dark">Dark</option>
-    </select>
+    <span class="settings__field-label">Theme</span>
+    <app-segmented-control [options]="themeOptions" [(value)]="theme" ariaLabel="Theme" />
   </div>
 
   <div class="settings__field settings__field--row">
-    <label for="sound">Sound</label>
-    <input
-      id="sound"
-      type="checkbox"
-      [formField]="settingsForm.soundEnabled"
-      (change)="onSoundChange($event)"
-    />
+    <span class="settings__field-label">Sound</span>
+    <app-toggle [(checked)]="soundEnabled" ariaLabel="Sound" />
   </div>
 
   <div class="settings__field">
-    <label for="motion">Motion</label>
-    <select id="motion" [formField]="settingsForm.motion" (change)="onMotionChange($event)">
-      <option value="system">System</option>
-      <option value="full">Full motion</option>
-      <option value="reduced">Reduced motion</option>
-    </select>
+    <span class="settings__field-label">Motion</span>
+    <app-segmented-control [options]="motionOptions" [(value)]="motion" ariaLabel="Motion" />
   </div>
 
   <div class="settings__field">

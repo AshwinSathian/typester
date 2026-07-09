@@ -1,0 +1,33 @@
+.app-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 2.75rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-border);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.app-toggle--on {
+  background: var(--color-accent-strong);
+}
+
+.app-toggle__thumb {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 25%);
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+
+.app-toggle--on .app-toggle__thumb {
+  transform: translateX(1.25rem);
+}
