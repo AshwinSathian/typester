@@ -1,69 +1,107 @@
 <main id="main-content" class="home">
-  <div class="home__hero">
-    <h1 class="home__title">Typester<span class="home__caret" aria-hidden="true"></span></h1>
-    <p class="home__tagline">Type fast. Beat the clock. Chase your best score.</p>
-
-    @if (hasPlayed()) {
-      <div class="home__teaser" role="status">
-        @if (stats().dayStreak > 1) {
-          <span class="home__chip home__chip--energy">
-            <svg class="home__chip-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M12 2c1 3-2 4.5-2 7.5a2 2 0 0 0 4 0c1.5 1 2.5 3 2.5 5a6.5 6.5 0 1 1-13 0C3.5 9.5 8 8 12 2Z"
-              />
-            </svg>
-            {{ stats().dayStreak }}-day streak
-          </span>
-        }
-        @if (bestOverall(); as best) {
-          <span class="home__chip">Best {{ best.totalScore }} pts</span>
-        }
-      </div>
-    }
-  </div>
-
-  <div class="home__actions">
-    <app-button variant="primary" [fullWidth]="true" (pressed)="startQuickPlay()">
-      Quick Play
-    </app-button>
-
-    <app-button
-      variant="secondary"
-      [fullWidth]="true"
-      [attr.aria-expanded]="showModePicker()"
-      aria-controls="mode-picker"
-      (pressed)="toggleModePicker()"
-    >
-      Game Modes
-    </app-button>
-
-    @if (showModePicker()) {
-      <div class="home__picker" id="mode-picker">
-        <div class="home__picker-group">
-          <span class="home__picker-label" id="difficulty-label">Difficulty</span>
-          <app-segmented-control
-            [options]="difficultyOptions"
-            [(value)]="difficulty"
-            ariaLabel="Difficulty"
-          />
-        </div>
-
-        <div class="home__picker-group">
-          <span class="home__picker-label" id="duration-label">Duration</span>
-          <app-segmented-control
-            [options]="durationOptions"
-            [(value)]="duration"
-            ariaLabel="Duration"
-          />
-        </div>
-
-        <app-button variant="primary" [fullWidth]="true" (pressed)="startTimedGame()">
-          Start
+  @if (challengeLink(); as challenge) {
+    <div class="home__challenge">
+      <p class="home__challenge-copy">{{ challengeLabel() }} — think you can beat it?</p>
+      <div class="home__actions">
+        <app-button variant="primary" [fullWidth]="true" (pressed)="acceptChallenge()">
+          Accept Challenge
+        </app-button>
+        <app-button variant="ghost" [fullWidth]="true" (pressed)="dismissChallenge()">
+          Play Typester normally
         </app-button>
       </div>
-    }
+    </div>
+  } @else {
+    <div class="home__hero">
+      <h1 class="home__title">Typester<span class="home__caret" aria-hidden="true"></span></h1>
+      <p class="home__tagline">Type fast. Beat the clock. Chase your best score.</p>
 
-    <app-button variant="ghost" [fullWidth]="true" (pressed)="goToHelp()">Help</app-button>
-    <app-button variant="ghost" [fullWidth]="true" (pressed)="goToSettings()">Settings</app-button>
-  </div>
+      @if (hasPlayed()) {
+        <div class="home__teaser" role="status">
+          @if (stats().dayStreak > 1) {
+            <span class="home__chip home__chip--energy">
+              <svg
+                class="home__chip-icon"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 2c1 3-2 4.5-2 7.5a2 2 0 0 0 4 0c1.5 1 2.5 3 2.5 5a6.5 6.5 0 1 1-13 0C3.5 9.5 8 8 12 2Z"
+                />
+              </svg>
+              {{ stats().dayStreak }}-day streak
+            </span>
+          }
+          @if (bestOverall(); as best) {
+            <span class="home__chip">Best {{ best.totalScore }} pts</span>
+          }
+        </div>
+      }
+
+      @if (streakStatus() === 'at-risk' || streakStatus() === 'freeze-will-cover') {
+        <div class="home__streak-banner" role="status">
+          @if (streakStatus() === 'freeze-will-cover') {
+            <p>A streak freeze covered yesterday - play today to keep it going.</p>
+          } @else {
+            <p>Play today to keep your {{ stats().dayStreak }}-day streak.</p>
+          }
+          <app-button variant="secondary" (pressed)="startQuickPlay()">Quick Play</app-button>
+        </div>
+      }
+
+      <button type="button" class="home__daily-cta" (click)="startDailyChallenge()">
+        <span class="home__daily-label">Typester Daily #{{ dailyDayNumber() }}</span>
+        <span class="home__daily-sub">Same words for everyone today →</span>
+      </button>
+    </div>
+
+    <div class="home__actions">
+      <app-button variant="primary" [fullWidth]="true" (pressed)="startQuickPlay()">
+        Quick Play
+      </app-button>
+
+      <app-button
+        variant="secondary"
+        [fullWidth]="true"
+        [attr.aria-expanded]="showModePicker()"
+        aria-controls="mode-picker"
+        (pressed)="toggleModePicker()"
+      >
+        Game Modes
+      </app-button>
+
+      @if (showModePicker()) {
+        <div class="home__picker" id="mode-picker">
+          <div class="home__picker-group">
+            <span class="home__picker-label" id="difficulty-label">Difficulty</span>
+            <app-segmented-control
+              [options]="difficultyOptions"
+              [(value)]="pickerDifficulty"
+              ariaLabel="Difficulty"
+            />
+          </div>
+
+          <div class="home__picker-group">
+            <span class="home__picker-label" id="duration-label">Duration</span>
+            <app-segmented-control
+              [options]="durationOptions"
+              [(value)]="pickerDuration"
+              ariaLabel="Duration"
+            />
+          </div>
+
+          <app-button variant="primary" [fullWidth]="true" (pressed)="startTimedGame()">
+            Start
+          </app-button>
+        </div>
+      }
+
+      <app-button variant="ghost" [fullWidth]="true" (pressed)="goToHelp()">Help</app-button>
+      <app-button variant="ghost" [fullWidth]="true" (pressed)="goToSettings()"
+        >Settings</app-button
+      >
+      <app-button variant="ghost" [fullWidth]="true" (pressed)="goToStats()">Your Stats</app-button>
+    </div>
+  }
 </main>

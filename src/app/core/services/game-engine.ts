@@ -5,7 +5,7 @@
  * evaluation. Angular components/services wrap this reactively via signals;
  * they must not reimplement any of this logic.
  */
-import { AchievementId } from '../models/achievement';
+import { AchievementId, DAY_STREAK_TIERS, WPM_CLUB_TIERS } from '../models/achievement';
 import { DIFFICULTIES, DIFFICULTY_POINTS, Difficulty } from '../models/difficulty';
 import { GameConfig, QUICK_PLAY_COMPOSITION } from '../models/game-config';
 import { GameResult } from '../models/game-result';
@@ -268,24 +268,38 @@ export class GameSession {
 
 /**
  * Evaluates which achievements a finished round newly unlocks, given the
- * player's stats from *before* this round. Pure and side-effect free —
- * StorageService is responsible for persisting the merged result.
+ * player's stats from *before* this round (plus the freshly-computed day
+ * streak, since that's derived from this same result but isn't part of
+ * priorStats yet - StorageService computes it first and passes it in).
+ * Pure and side-effect free — StorageService is responsible for persisting
+ * the merged result.
  */
-export function evaluateAchievements(result: GameResult, priorStats: Stats): AchievementId[] {
+export function evaluateAchievements(
+  result: GameResult,
+  priorStats: Stats,
+  currentDayStreak: number = priorStats.dayStreak,
+): AchievementId[] {
   const already = new Set(priorStats.achievementsUnlocked);
   const unlocked = new Set<AchievementId>();
 
   if (priorStats.roundsPlayed === 0) {
     unlocked.add('first-round');
   }
-  if (result.wpm >= 50) {
-    unlocked.add('wpm-50');
+  for (const tier of WPM_CLUB_TIERS) {
+    if (result.wpm >= tier) {
+      unlocked.add(`wpm-${tier}` as AchievementId);
+    }
   }
   if (result.accuracy >= 1 && result.wordsCorrect > 0) {
     unlocked.add('perfect-accuracy');
   }
   if (result.bestStreak >= 10) {
     unlocked.add('streak-10');
+  }
+  for (const tier of DAY_STREAK_TIERS) {
+    if (currentDayStreak >= tier) {
+      unlocked.add(`streak-day-${tier}` as AchievementId);
+    }
   }
 
   if (result.config.mode === 'timed') {
@@ -297,4 +311,72 @@ export function evaluateAchievements(result: GameResult, priorStats: Stats): Ach
   }
 
   return [...unlocked].filter((id) => !already.has(id));
+}
+
+/** A single not-yet-unlocked achievement's numeric gap, for the Results
+ *  screen's "closest miss" line (DESIGN §Results screen rework:
+ *  Progress-toward-next-badge). */
+export interface AchievementProgress {
+  readonly id: AchievementId;
+  readonly label: string;
+  readonly remaining: number;
+  readonly unit: string;
+}
+
+function achievementProgress(
+  result: GameResult,
+  priorStats: Stats,
+  currentDayStreak: number,
+): AchievementProgress[] {
+  const already = new Set(priorStats.achievementsUnlocked);
+  const progress: AchievementProgress[] = [];
+
+  for (const tier of WPM_CLUB_TIERS) {
+    const id = `wpm-${tier}` as AchievementId;
+    if (!already.has(id) && result.wpm < tier) {
+      progress.push({ id, label: `${tier} WPM Club`, remaining: tier - result.wpm, unit: 'WPM' });
+    }
+  }
+  if (!already.has('streak-10') && result.bestStreak < 10) {
+    progress.push({
+      id: 'streak-10',
+      label: '10-Streak',
+      remaining: 10 - result.bestStreak,
+      unit: 'in a row',
+    });
+  }
+  for (const tier of DAY_STREAK_TIERS) {
+    const id = `streak-day-${tier}` as AchievementId;
+    if (!already.has(id) && currentDayStreak < tier) {
+      progress.push({
+        id,
+        label: `${tier}-Day Streak`,
+        remaining: tier - currentDayStreak,
+        unit: 'days',
+      });
+    }
+  }
+
+  return progress;
+}
+
+/**
+ * The single closest not-yet-unlocked achievement this round, as a
+ * human-readable line ("6 more WPM for the 50 WPM Club"). Returns null once
+ * there's nothing left computable to be close to, or when this round
+ * already unlocked something (the caller should prefer showing that instead
+ * — see Results.unlockedAchievements()).
+ */
+export function closestAchievementMiss(
+  result: GameResult,
+  priorStats: Stats,
+  currentDayStreak: number = priorStats.dayStreak,
+): string | null {
+  const progress = achievementProgress(result, priorStats, currentDayStreak);
+  if (progress.length === 0) return null;
+
+  const closest = progress.reduce((a, b) => (b.remaining < a.remaining ? b : a));
+  if (closest.remaining <= 0) return null;
+
+  return `${closest.remaining} more ${closest.unit} for the ${closest.label}`;
 }

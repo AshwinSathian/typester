@@ -1,5 +1,9 @@
 @if (result(); as result) {
   <main id="main-content" class="results">
+    @if (dailyChallenge(); as daily) {
+      <p class="results__eyebrow">Typester Daily #{{ daily.dayNumber }}</p>
+    }
+
     @if (isNewBest()) {
       <p class="results__badge">
         New Best
@@ -18,10 +22,15 @@
       </p>
     }
 
+    @if (freezeConsumed()) {
+      <p class="results__freeze-note">A streak freeze covered yesterday's gap.</p>
+    }
+
+    <app-stat-badge label="Total" size="large" [value]="result.totalScore" [countUp]="true" />
+
     <div class="results__grid">
       <app-stat-badge label="Score" [value]="result.baseScore" [countUp]="true" />
       <app-stat-badge label="Time Bonus" [value]="result.timeBonus" [countUp]="true" />
-      <app-stat-badge label="Total" [value]="result.totalScore" [countUp]="true" />
       <app-stat-badge label="WPM" [value]="result.wpm" [countUp]="true" />
       <app-stat-badge label="Accuracy" [value]="accuracyPercent()" suffix="%" [countUp]="true" />
     </div>
@@ -38,6 +47,8 @@
           </span>
         }
       </div>
+    } @else if (closestMiss(); as miss) {
+      <p class="results__closest-miss">{{ miss }}</p>
     }
 
     <div class="results__actions">
@@ -48,6 +59,11 @@
         Share
       </app-button>
       <app-button variant="ghost" [fullWidth]="true" (pressed)="goToMenu()">Menu</app-button>
+      @if (suggestedCombo(); as combo) {
+        <app-button variant="ghost" [fullWidth]="true" (pressed)="playSuggestedCombo()">
+          New best — try {{ combo.label }}?
+        </app-button>
+      }
     </div>
 
     @if (toastMessage(); as message) {

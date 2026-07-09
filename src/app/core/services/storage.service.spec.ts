@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
+import { buildDailyChallenge } from './daily-challenge';
 import { GameConfig } from '../models/game-config';
 import { GameResult } from '../models/game-result';
 import { DEFAULT_SETTINGS } from '../models/settings';
@@ -134,6 +135,76 @@ describe('StorageService', () => {
     expect(service.stats().dayStreak).toBe(0);
     expect(service.stats().lastPlayedDate).toBeNull();
     expect(service.stats().roundsPlayed).toBe(3);
+  });
+
+  it('awards a streak-freeze token every 7 consecutive days, not before', () => {
+    const service = TestBed.inject(StorageService);
+    for (let day = 0; day < 6; day++) {
+      service.recordResult(
+        fixtureResult({ finishedAt: `2026-07-${String(day + 1).padStart(2, '0')}T12:00:00.000Z` }),
+      );
+    }
+    expect(service.stats().dayStreak).toBe(6);
+    expect(service.stats().streakFreezeCount).toBe(0);
+
+    service.recordResult(fixtureResult({ finishedAt: '2026-07-07T12:00:00.000Z' }));
+    expect(service.stats().dayStreak).toBe(7);
+    expect(service.stats().streakFreezeCount).toBe(1);
+  });
+
+  it('consumes exactly one freeze token to forgive exactly one missed day', () => {
+    const service = TestBed.inject(StorageService);
+    for (let day = 1; day <= 7; day++) {
+      service.recordResult(
+        fixtureResult({ finishedAt: `2026-07-${String(day).padStart(2, '0')}T12:00:00.000Z` }),
+      );
+    }
+    expect(service.stats().streakFreezeCount).toBe(1);
+
+    // Day 8 is skipped entirely; playing again on day 9 should consume the
+    // one freeze token and continue the streak rather than resetting it.
+    const outcome = service.recordResult(fixtureResult({ finishedAt: '2026-07-09T12:00:00.000Z' }));
+    expect(outcome.freezeConsumed).toBe(true);
+    expect(service.stats().dayStreak).toBe(8);
+    expect(service.stats().streakFreezeCount).toBe(0);
+
+    // A second consecutive gap with no freeze left resets to 1, not another forgiveness.
+    const secondOutcome = service.recordResult(
+      fixtureResult({ finishedAt: '2026-07-11T12:00:00.000Z' }),
+    );
+    expect(secondOutcome.freezeConsumed).toBe(false);
+    expect(service.stats().dayStreak).toBe(1);
+  });
+
+  it('records a daily-challenge result into its own dailyResults bucket, never bestScores', () => {
+    const service = TestBed.inject(StorageService);
+    const challenge = buildDailyChallenge('2026-07-09');
+    const outcome = service.recordDailyResult(
+      challenge,
+      fixtureResult({ finishedAt: '2026-07-09T12:00:00.000Z' }),
+    );
+
+    expect(outcome.isNewBest).toBe(true);
+    expect(service.stats().dailyResults['2026-07-09'].totalScore).toBe(15);
+    expect(service.stats().dailyResults['2026-07-09'].dayNumber).toBe(challenge.dayNumber);
+    expect(service.stats().bestScores['timed:medium:60']).toBeUndefined();
+    expect(service.stats().roundsPlayed).toBe(1);
+  });
+
+  it('keeps the higher score when the same daily date is replayed', () => {
+    const service = TestBed.inject(StorageService);
+    const challenge = buildDailyChallenge('2026-07-09');
+    service.recordDailyResult(
+      challenge,
+      fixtureResult({ totalScore: 50, finishedAt: '2026-07-09T12:00:00.000Z' }),
+    );
+    const outcome = service.recordDailyResult(
+      challenge,
+      fixtureResult({ totalScore: 10, finishedAt: '2026-07-09T13:00:00.000Z' }),
+    );
+
+    expect(outcome.isNewBest).toBe(false);
+    expect(service.stats().dailyResults['2026-07-09'].totalScore).toBe(50);
   });
 
   it('reconciles stats written by another tab via the storage event', () => {

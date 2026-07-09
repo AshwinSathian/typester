@@ -1,4 +1,5 @@
-import { Difficulty } from './difficulty';
+import { DIFFICULTIES, Difficulty } from './difficulty';
+import { Stats } from './stats';
 
 export type GameMode = 'quick' | 'timed';
 
@@ -43,4 +44,53 @@ export function isValidGameConfig(mode: string, difficulty: string, duration: st
   }
 
   return false;
+}
+
+export interface ComboDescriptor {
+  readonly config: GameConfig;
+  readonly key: string;
+  readonly label: string;
+}
+
+/** The fixed 10-combo set (1 Quick Play + 3 difficulties × 3 durations) the
+ *  Stats screen's best-scores grid and Results' next-combo cross-promotion
+ *  both iterate (PLAN-typester-growth.md Phase 7). */
+export function allGameCombos(): readonly ComboDescriptor[] {
+  const quick: GameConfig = {
+    mode: 'quick',
+    difficulty: 'mixed',
+    durationSeconds: QUICK_PLAY_DURATION_SECONDS,
+  };
+  const combos: ComboDescriptor[] = [
+    { config: quick, key: gameConfigKey(quick), label: 'Quick Play' },
+  ];
+
+  for (const difficulty of DIFFICULTIES) {
+    for (const duration of GAME_DURATIONS) {
+      const config: GameConfig = { mode: 'timed', difficulty, durationSeconds: duration };
+      const label = `${difficulty.charAt(0).toUpperCase()}${difficulty.slice(1)} · ${duration}s`;
+      combos.push({ config, key: gameConfigKey(config), label });
+    }
+  }
+
+  return combos;
+}
+
+/**
+ * The next not-yet-beaten combo after `current` in the fixed 10-combo
+ * order (wrapping around), for Results' cross-promotion action. Returns
+ * null once every combo already has a best score - never suggests one
+ * already beaten (DESIGN §Results screen rework: Next-combo
+ * cross-promotion).
+ */
+export function nextUnbeatenCombo(stats: Stats, current: GameConfig): ComboDescriptor | null {
+  const combos = allGameCombos();
+  const currentKey = gameConfigKey(current);
+  const currentIndex = combos.findIndex((combo) => combo.key === currentKey);
+  const ordered =
+    currentIndex === -1
+      ? combos
+      : [...combos.slice(currentIndex + 1), ...combos.slice(0, currentIndex + 1)];
+
+  return ordered.find((combo) => combo.key !== currentKey && !stats.bestScores[combo.key]) ?? null;
 }

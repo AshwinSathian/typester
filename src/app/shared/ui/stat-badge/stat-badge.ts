@@ -4,7 +4,11 @@ import { Component, PLATFORM_ID, computed, effect, inject, input, signal } from 
 @Component({
   selector: 'app-stat-badge',
   template: `
-    <div class="app-stat-badge" [class.app-stat-badge--energy]="variant() === 'energy'">
+    <div
+      class="app-stat-badge"
+      [class.app-stat-badge--energy]="variant() === 'energy'"
+      [class.app-stat-badge--large]="size() === 'large'"
+    >
       <span class="app-stat-badge__label">{{ label() }}</span>
       <span class="app-stat-badge__value" [class.app-stat-badge__value--pop]="popping()">
         {{ formattedValue() }}
@@ -20,6 +24,10 @@ export class StatBadge {
   /** 'energy' marks momentum-driven stats (combo) with the warm accent
    *  reserved for in-round momentum, distinct from the default neutral badge. */
   readonly variant = input<'default' | 'energy'>('default');
+  /** 'large' gives this badge 1.5-2x the visual weight of a default one and
+   *  an accent color - used for Results' Total, the one number that should
+   *  visually dominate the rest (DESIGN §Results screen rework). */
+  readonly size = input<'default' | 'large'>('default');
   /** Counts up from 0 on first render instead of appearing instantly - used
    *  on Results, where a satisfying reveal matters more than an instant read. */
   readonly countUp = input(false);

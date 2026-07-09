@@ -8,6 +8,28 @@
   padding: var(--space-8) var(--space-4);
 }
 
+.results__eyebrow {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.results__freeze-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.results__closest-miss {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 .results__badge {
   position: relative;
   background: var(--color-accent-strong);
@@ -80,15 +102,26 @@
   max-width: 28rem;
 }
 
+/* Celebratory fill, not the muted/disabled-tag look this used to have - an
+   unlock should read as an unlock at a glance (DESIGN §Results screen
+   rework: Achievement chips). */
 .results__achievement {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   padding: var(--space-1) var(--space-3);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
+  background: color-mix(in oklch, var(--color-accent) 12%, var(--color-surface));
+  border: 1px solid var(--color-accent);
   border-radius: var(--radius-sm);
   font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--color-text-muted);
+  font-weight: 700;
+  color: var(--color-accent-strong);
   animation: results-chip-in var(--duration-fast) var(--ease-standard) backwards;
+}
+
+.results__achievement::before {
+  content: '✓';
+  font-weight: 700;
 }
 
 @keyframes results-chip-in {

@@ -34,7 +34,7 @@ describe('Results', () => {
     window.history.replaceState({}, '');
   });
 
-  it('renders the stat grid computed from the fixture result', () => {
+  it('renders Total first (visually dominant), then the secondary stat row', () => {
     window.history.replaceState({ result: fixtureResult(), isNewBest: false }, '');
     const fixture = TestBed.createComponent(Results);
     fixture.detectChanges();
@@ -43,7 +43,7 @@ describe('Results', () => {
       (el) => (el as HTMLElement).textContent?.trim(),
     );
 
-    expect(values).toEqual(['40', '10', '50', '45', '95%']);
+    expect(values).toEqual(['50', '40', '10', '45', '95%']);
   });
 
   it('shows the New Best badge only when isNewBest is true', () => {
@@ -91,6 +91,90 @@ describe('Results', () => {
       (el) => (el as HTMLElement).textContent?.trim(),
     );
     expect(chips).toEqual(['50 WPM Club', '10-Streak']);
+  });
+
+  it('shows the closest-miss line only when nothing unlocked this round', () => {
+    window.history.replaceState(
+      { result: fixtureResult(), isNewBest: false, closestMiss: '6 more WPM for the 50 WPM Club' },
+      '',
+    );
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.results__closest-miss')?.textContent?.trim()).toBe(
+      '6 more WPM for the 50 WPM Club',
+    );
+  });
+
+  it('prefers unlocked-achievement chips over the closest-miss line', () => {
+    window.history.replaceState(
+      {
+        result: fixtureResult({ achievementsUnlocked: ['wpm-50'] }),
+        isNewBest: false,
+        closestMiss: 'should not show',
+      },
+      '',
+    );
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.results__closest-miss')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.results__achievement')).not.toBeNull();
+  });
+
+  it('shows the Typester Daily sub-brand eyebrow for a daily-challenge result', () => {
+    window.history.replaceState(
+      {
+        result: fixtureResult(),
+        isNewBest: false,
+        dailyChallenge: {
+          date: '2026-07-09',
+          seed: 1,
+          config: fixtureResult().config,
+          dayNumber: 7,
+        },
+      },
+      '',
+    );
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.results__eyebrow')?.textContent).toContain(
+      'Typester Daily #7',
+    );
+  });
+
+  it('shows a streak-freeze note when this round consumed one', () => {
+    window.history.replaceState(
+      { result: fixtureResult(), isNewBest: false, freezeConsumed: true },
+      '',
+    );
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.results__freeze-note')).not.toBeNull();
+  });
+
+  it('suggests the next unbeaten combo only alongside a new best', () => {
+    window.history.replaceState({ result: fixtureResult(), isNewBest: true }, '');
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+
+    const suggestion = Array.from(fixture.nativeElement.querySelectorAll('app-button')).find(
+      (btn) => (btn as HTMLElement).textContent?.includes('New best'),
+    );
+    expect(suggestion).not.toBeUndefined();
+  });
+
+  it('does not suggest a next combo without a new best', () => {
+    window.history.replaceState({ result: fixtureResult(), isNewBest: false }, '');
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+
+    const suggestion = Array.from(fixture.nativeElement.querySelectorAll('app-button')).find(
+      (btn) => (btn as HTMLElement).textContent?.includes('New best'),
+    );
+    expect(suggestion).toBeUndefined();
   });
 
   it('redirects home when there is no result in navigation state', () => {

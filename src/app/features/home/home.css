@@ -132,3 +132,81 @@
     transform: translateY(0);
   }
 }
+
+/* Challenge-link landing state (DESIGN §Home screen additions) - replaces
+   the standard hero entirely when Home is opened via a shared "beat my
+   score" link. A landing-state override, not a persistent app mode. */
+.home__challenge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  max-width: 24rem;
+  text-align: center;
+}
+
+.home__challenge-copy {
+  margin: 0;
+  color: var(--color-accent);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Day-streak "at risk" / "freeze will cover" banner - an in-flow card, not
+   the fixed bottom bar NoticeBanner used to be (that pattern was removed in
+   Phase 5). */
+.home__streak-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  max-width: 22rem;
+  background: color-mix(in oklch, var(--color-accent) 8%, var(--color-surface));
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  animation: home-picker-expand var(--duration-base) var(--ease-standard);
+}
+
+.home__streak-banner p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.home__daily-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.home__daily-cta:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in oklch, var(--color-accent) 6%, var(--color-surface-raised));
+}
+
+.home__daily-label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.home__daily-sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}

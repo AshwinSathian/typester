@@ -92,7 +92,7 @@ describe('Home', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/play', 'timed', 'hard', '60']);
   });
 
-  it('navigates to help and settings', () => {
+  it('navigates to help, settings, and stats', () => {
     const fixture = TestBed.createComponent(Home);
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -104,5 +104,65 @@ describe('Home', () => {
 
     buttons[3].querySelector('button').click();
     expect(navigateSpy).toHaveBeenCalledWith(['/settings']);
+
+    buttons[4].querySelector('button').click();
+    expect(navigateSpy).toHaveBeenCalledWith(['/stats']);
+  });
+
+  it("starts the daily challenge for today's UTC date", () => {
+    const fixture = TestBed.createComponent(Home);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.home__daily-cta').click();
+
+    expect(navigateSpy).toHaveBeenCalledWith([
+      '/play',
+      'daily',
+      fixture.componentInstance['todayUtc'],
+    ]);
+  });
+
+  it('shows the challenge-link landing state instead of the standard hero when valid params are present', () => {
+    const fixture = TestBed.createComponent(Home);
+    fixture.componentRef.setInput('mode', 'timed');
+    fixture.componentRef.setInput('difficulty', 'hard');
+    fixture.componentRef.setInput('duration', '60');
+    fixture.componentRef.setInput('score', '412');
+    fixture.componentRef.setInput('wpm', '88');
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.home__challenge')).not.toBeNull();
+    expect(el.querySelector('.home__hero')).toBeNull();
+    expect(el.querySelector('.home__challenge-copy')?.textContent).toContain('412 pts');
+    expect(el.querySelector('.home__challenge-copy')?.textContent).toContain('88 WPM');
+  });
+
+  it('accepting a challenge link navigates straight into that exact config', () => {
+    const fixture = TestBed.createComponent(Home);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    fixture.componentRef.setInput('mode', 'timed');
+    fixture.componentRef.setInput('difficulty', 'hard');
+    fixture.componentRef.setInput('duration', '60');
+    fixture.componentRef.setInput('score', '412');
+    fixture.componentRef.setInput('wpm', '88');
+    fixture.detectChanges();
+
+    const acceptButton = Array.from(fixture.nativeElement.querySelectorAll('app-button')).find(
+      (btn) => (btn as HTMLElement).textContent?.trim() === 'Accept Challenge',
+    ) as HTMLElement;
+    acceptButton.querySelector('button')!.dispatchEvent(new Event('click'));
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/play', 'timed', 'hard', 60]);
+  });
+
+  it('shows the standard hero when challenge-link params are absent or invalid', () => {
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.home__hero')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.home__challenge')).toBeNull();
   });
 });

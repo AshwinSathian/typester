@@ -2,11 +2,12 @@ import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 
 import { AchievementId } from '../models/achievement';
+import { DailyChallenge } from '../models/daily-challenge';
 import { Difficulty } from '../models/difficulty';
 import { gameConfigKey } from '../models/game-config';
 import { GameResult } from '../models/game-result';
 import { DEFAULT_SETTINGS, MotionPreference, Settings, ThemePreference } from '../models/settings';
-import { BestScoreEntry, DEFAULT_STATS, Stats } from '../models/stats';
+import { BestScoreEntry, DEFAULT_STATS, DailyResultEntry, Stats } from '../models/stats';
 import { evaluateAchievements } from './game-engine';
 
 /**
@@ -61,16 +62,19 @@ function isStats(value: unknown): value is Stats {
 }
 
 /**
- * dayStreak/lastPlayedDate were added after this app went live, so stored
- * data from before that change won't have them - defaulted here rather than
- * added to isStats's requirements, so a returning user's existing
- * bestScores/achievements aren't wiped just because the schema grew a field.
+ * dayStreak/lastPlayedDate/dailyResults/streakFreezeCount were all added
+ * after this app went live, so stored data from before those changes won't
+ * have them - defaulted here rather than added to isStats's requirements,
+ * so a returning user's existing bestScores/achievements aren't wiped just
+ * because the schema grew a field.
  */
 function normalizeStats(value: Stats): Stats {
   return {
     ...value,
+    dailyResults: value.dailyResults ?? {},
     dayStreak: value.dayStreak ?? 0,
     lastPlayedDate: value.lastPlayedDate ?? null,
+    streakFreezeCount: value.streakFreezeCount ?? 0,
   };
 }
 
@@ -78,24 +82,74 @@ function dateKey(iso: string): string {
   return iso.slice(0, 10);
 }
 
-function nextDayStreak(
-  prior: Stats,
-  finishedAtIso: string,
-): Pick<Stats, 'dayStreak' | 'lastPlayedDate'> {
+function daysBeforeIso(iso: string, days: number): string {
+  return dateKey(new Date(new Date(iso).getTime() - days * 86_400_000).toISOString());
+}
+
+/** Awards one freeze token every time the streak crosses a multiple of 7 -
+ *  scarce and earned by design, never unlimited (PLAN-typester-growth.md
+ *  §Risks: an unlimited freeze removes the loss aversion the mechanic
+ *  exists to create). */
+function awardFreezeIfEarned(freezeCount: number, dayStreak: number): number {
+  return dayStreak > 0 && dayStreak % 7 === 0 ? freezeCount + 1 : freezeCount;
+}
+
+interface DayStreakUpdate {
+  readonly dayStreak: number;
+  readonly lastPlayedDate: string;
+  readonly streakFreezeCount: number;
+  readonly freezeConsumed: boolean;
+}
+
+function nextDayStreak(prior: Stats, finishedAtIso: string): DayStreakUpdate {
   const today = dateKey(finishedAtIso);
   if (prior.lastPlayedDate === today) {
-    return { dayStreak: prior.dayStreak, lastPlayedDate: today };
+    return {
+      dayStreak: prior.dayStreak,
+      lastPlayedDate: today,
+      streakFreezeCount: prior.streakFreezeCount,
+      freezeConsumed: false,
+    };
   }
 
-  const yesterday = dateKey(new Date(new Date(finishedAtIso).getTime() - 86_400_000).toISOString());
-  const isConsecutive = prior.lastPlayedDate === yesterday;
-  return { dayStreak: isConsecutive ? prior.dayStreak + 1 : 1, lastPlayedDate: today };
+  const yesterday = daysBeforeIso(finishedAtIso, 1);
+  if (prior.lastPlayedDate === yesterday) {
+    const dayStreak = prior.dayStreak + 1;
+    return {
+      dayStreak,
+      lastPlayedDate: today,
+      streakFreezeCount: awardFreezeIfEarned(prior.streakFreezeCount, dayStreak),
+      freezeConsumed: false,
+    };
+  }
+
+  // A single missed day, forgiven by a freeze token if one is available -
+  // the streak continues exactly as if the gap hadn't happened, but the
+  // token is spent (exactly one gap forgiven, never more).
+  const twoDaysAgo = daysBeforeIso(finishedAtIso, 2);
+  if (prior.lastPlayedDate === twoDaysAgo && prior.streakFreezeCount > 0) {
+    const dayStreak = prior.dayStreak + 1;
+    return {
+      dayStreak,
+      lastPlayedDate: today,
+      streakFreezeCount: awardFreezeIfEarned(prior.streakFreezeCount - 1, dayStreak),
+      freezeConsumed: true,
+    };
+  }
+
+  return {
+    dayStreak: 1,
+    lastPlayedDate: today,
+    streakFreezeCount: prior.streakFreezeCount,
+    freezeConsumed: false,
+  };
 }
 
 export interface RecordResultOutcome {
   readonly stats: Stats;
   readonly achievementsUnlocked: readonly AchievementId[];
   readonly isNewBest: boolean;
+  readonly freezeConsumed: boolean;
 }
 
 /**
@@ -125,7 +179,8 @@ export class StorageService {
 
   recordResult(result: GameResult): RecordResultOutcome {
     const prior = this.stats();
-    const achievementsUnlocked = evaluateAchievements(result, prior);
+    const dayStreakUpdate = nextDayStreak(prior, result.finishedAt);
+    const achievementsUnlocked = evaluateAchievements(result, prior, dayStreakUpdate.dayStreak);
 
     const key = gameConfigKey(result.config);
     const existingBest = prior.bestScores[key];
@@ -147,18 +202,57 @@ export class StorageService {
         ? [...new Set([...prior.difficultiesBeaten, result.config.difficulty as Difficulty])]
         : prior.difficultiesBeaten;
 
+    const { freezeConsumed, ...dayStreakFields } = dayStreakUpdate;
     const next: Stats = {
+      ...prior,
       bestScores,
       achievementsUnlocked: [...prior.achievementsUnlocked, ...achievementsUnlocked],
       roundsPlayed: prior.roundsPlayed + 1,
       totalWordsTyped: prior.totalWordsTyped + result.wordsCorrect,
       difficultiesBeaten,
-      ...nextDayStreak(prior, result.finishedAt),
+      ...dayStreakFields,
     };
 
     this.stats.set(next);
     this.write(STATS_KEY, next);
-    return { stats: next, achievementsUnlocked, isNewBest };
+    return { stats: next, achievementsUnlocked, isNewBest, freezeConsumed };
+  }
+
+  /**
+   * Same round bookkeeping as recordResult (day streak, rounds played,
+   * words typed, achievements), but the score writes into its own
+   * dailyResults[date] bucket, never bestScores - a daily-challenge result
+   * never competes with (or gets conflated with) a manually-picked config's
+   * best score (PLAN-typester-growth.md Phase 6).
+   */
+  recordDailyResult(challenge: DailyChallenge, result: GameResult): RecordResultOutcome {
+    const prior = this.stats();
+    const dayStreakUpdate = nextDayStreak(prior, result.finishedAt);
+    const achievementsUnlocked = evaluateAchievements(result, prior, dayStreakUpdate.dayStreak);
+
+    const existing = prior.dailyResults[challenge.date];
+    const isNewBest = !existing || result.totalScore > existing.totalScore;
+    const entry: DailyResultEntry = {
+      totalScore: isNewBest ? result.totalScore : existing.totalScore,
+      wpm: isNewBest ? result.wpm : existing.wpm,
+      accuracy: isNewBest ? result.accuracy : existing.accuracy,
+      achievedAt: isNewBest ? result.finishedAt : existing.achievedAt,
+      dayNumber: challenge.dayNumber,
+    };
+
+    const { freezeConsumed, ...dayStreakFields } = dayStreakUpdate;
+    const next: Stats = {
+      ...prior,
+      dailyResults: { ...prior.dailyResults, [challenge.date]: entry },
+      achievementsUnlocked: [...prior.achievementsUnlocked, ...achievementsUnlocked],
+      roundsPlayed: prior.roundsPlayed + 1,
+      totalWordsTyped: prior.totalWordsTyped + result.wordsCorrect,
+      ...dayStreakFields,
+    };
+
+    this.stats.set(next);
+    this.write(STATS_KEY, next);
+    return { stats: next, achievementsUnlocked, isNewBest, freezeConsumed };
   }
 
   private onStorageEvent(event: StorageEvent): void {

@@ -12,14 +12,19 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { DailyChallenge } from '../../core/models/daily-challenge';
 import { Difficulty } from '../../core/models/difficulty';
 import { GameConfig, GameMode, RouteDifficulty } from '../../core/models/game-config';
 import { GameResult } from '../../core/models/game-result';
+import { WordEntry } from '../../core/models/word';
+import { DAILY_CHALLENGE_CONFIG } from '../../core/services/daily-challenge';
+import { DailyChallengeService } from '../../core/services/daily-challenge.service';
 import {
   GameSession,
   SessionSnapshot,
   WordPools,
   buildRoundWords,
+  closestAchievementMiss,
 } from '../../core/services/game-engine';
 import { SoundService } from '../../core/services/sound.service';
 import { StorageService } from '../../core/services/storage.service';
@@ -46,13 +51,18 @@ const INCORRECT_FEEDBACK_MS = 420;
   styleUrl: './game.css',
 })
 export class Game implements OnInit {
-  readonly mode = input.required<string>();
-  readonly difficulty = input.required<string>();
-  readonly duration = input.required<string>();
+  /** mode/difficulty/duration come from /play/:mode/:difficulty/:duration;
+   *  date comes from /play/daily/:date instead - exactly one set is bound
+   *  per route, never both (see config() below). */
+  readonly mode = input<string>();
+  readonly difficulty = input<string>();
+  readonly duration = input<string>();
+  readonly date = input<string>();
 
   private readonly router = inject(Router);
   private readonly wordSource = inject(WordSourceService);
   private readonly storage = inject(StorageService);
+  private readonly dailyChallenge = inject(DailyChallengeService);
   private readonly sound = inject(SoundService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -91,11 +101,16 @@ export class Game implements OnInit {
     return Math.round(snap.correctChars / 5 / elapsedMinutes);
   });
 
-  protected readonly config = computed<GameConfig>(() => ({
-    mode: this.mode() as GameMode,
-    difficulty: this.difficulty() as RouteDifficulty,
-    durationSeconds: Number(this.duration()),
-  }));
+  protected readonly isDaily = computed(() => !!this.date());
+
+  protected readonly config = computed<GameConfig>(() => {
+    if (this.date()) return DAILY_CHALLENGE_CONFIG;
+    return {
+      mode: this.mode() as GameMode,
+      difficulty: this.difficulty() as RouteDifficulty,
+      durationSeconds: Number(this.duration()),
+    };
+  });
 
   protected readonly liveAnnouncement = computed(() => {
     const snap = this.snapshot();
@@ -112,6 +127,7 @@ export class Game implements OnInit {
   private readonly answerInputRef = viewChild<ElementRef<HTMLInputElement>>('answerInput');
 
   private session: GameSession | null = null;
+  private activeDailyChallenge: DailyChallenge | null = null;
   private startedAtMs = 0;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private feedbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -243,8 +259,7 @@ export class Game implements OnInit {
 
   private async beginRound(): Promise<void> {
     const config = this.config();
-    const pools = await this.loadPools(config);
-    const words = buildRoundWords(config, pools);
+    const words = await this.loadWords(config);
 
     this.session = new GameSession(config, words);
     this.startedAtMs = Date.now();
@@ -254,6 +269,18 @@ export class Game implements OnInit {
     this.phase.set('playing');
 
     this.intervalId = setInterval(() => this.tick(), TICK_INTERVAL_MS);
+  }
+
+  private async loadWords(config: GameConfig): Promise<readonly WordEntry[]> {
+    const dateParam = this.date();
+    if (dateParam) {
+      const challenge = this.dailyChallenge.challengeFor(dateParam);
+      this.activeDailyChallenge = challenge;
+      return this.dailyChallenge.buildWords(challenge);
+    }
+
+    const pools = await this.loadPools(config);
+    return buildRoundWords(config, pools);
   }
 
   private async loadPools(config: GameConfig): Promise<WordPools> {
@@ -300,14 +327,27 @@ export class Game implements OnInit {
     this.phase.set('finished');
 
     const result = this.session!.result();
-    const outcome = this.storage.recordResult(result);
+    const priorStats = this.storage.stats();
+    const outcome = this.activeDailyChallenge
+      ? this.storage.recordDailyResult(this.activeDailyChallenge, result)
+      : this.storage.recordResult(result);
     const finalResult: GameResult = {
       ...result,
       achievementsUnlocked: outcome.achievementsUnlocked,
     };
+    const closestMiss =
+      outcome.achievementsUnlocked.length === 0
+        ? closestAchievementMiss(result, priorStats, outcome.stats.dayStreak)
+        : null;
 
     void this.router.navigate(['/results'], {
-      state: { result: finalResult, isNewBest: outcome.isNewBest },
+      state: {
+        result: finalResult,
+        isNewBest: outcome.isNewBest,
+        closestMiss,
+        dailyChallenge: this.activeDailyChallenge,
+        freezeConsumed: outcome.freezeConsumed,
+      },
     });
   }
 

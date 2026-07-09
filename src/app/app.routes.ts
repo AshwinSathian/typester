@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { gameConfigGuard } from './core/guards/game-config.guard';
+import { dailyChallengeGuard, gameConfigGuard } from './core/guards/game-config.guard';
 
 export const routes: Routes = [
   {
@@ -13,11 +13,26 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'play/daily/:date',
+    loadComponent: () => import('./features/game/game').then((m) => m.Game),
+    canActivate: [dailyChallengeGuard],
+    title: 'Typester Daily',
+    data: { description: "Today's Typester Daily challenge — the same words for everyone." },
+  },
+  {
     path: 'play/:mode/:difficulty/:duration',
     loadComponent: () => import('./features/game/game').then((m) => m.Game),
     canActivate: [gameConfigGuard],
     title: 'Typester — playing',
     data: { description: 'A live round of Typester.' },
+  },
+  {
+    path: 'stats',
+    loadComponent: () => import('./features/stats/stats').then((m) => m.Stats),
+    title: 'Typester — your stats',
+    data: {
+      description: 'Your Typester progress: streaks, best scores, and every achievement.',
+    },
   },
   {
     path: 'results',

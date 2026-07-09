@@ -5,6 +5,7 @@ import {
   GameSession,
   WordPools,
   buildRoundWords,
+  closestAchievementMiss,
   evaluateAchievements,
   isNearMiss,
   multiplierForStreak,
@@ -262,5 +263,67 @@ describe('evaluateAchievements', () => {
     const unlocked = evaluateAchievements({ ...baseResult, wpm: 60 }, already);
     expect(unlocked).not.toContain('first-round');
     expect(unlocked).not.toContain('wpm-50');
+  });
+
+  it('unlocks every WPM Club tier at or below the achieved WPM', () => {
+    const unlocked = evaluateAchievements({ ...baseResult, wpm: 75 }, DEFAULT_STATS);
+    expect(unlocked).toEqual(expect.arrayContaining(['wpm-30', 'wpm-50', 'wpm-70']));
+    expect(unlocked).not.toContain('wpm-90');
+    expect(unlocked).not.toContain('wpm-110');
+  });
+
+  it('unlocks day-streak milestones from the freshly-computed current streak, not priorStats', () => {
+    const unlocked = evaluateAchievements(baseResult, DEFAULT_STATS, 7);
+    expect(unlocked).toContain('streak-day-7');
+    expect(unlocked).not.toContain('streak-day-30');
+  });
+
+  it('does not re-unlock a day-streak milestone already present in priorStats', () => {
+    const already = { ...DEFAULT_STATS, achievementsUnlocked: ['streak-day-7'] as const };
+    const unlocked = evaluateAchievements(baseResult, already, 10);
+    expect(unlocked).not.toContain('streak-day-7');
+  });
+});
+
+describe('closestAchievementMiss', () => {
+  const baseResult = {
+    config: { mode: 'timed', difficulty: 'easy', durationSeconds: 30 } as GameConfig,
+    wordsCorrect: 5,
+    wordsIncorrect: 0,
+    baseScore: 10,
+    timeBonus: 0,
+    totalScore: 10,
+    wpm: 24,
+    accuracy: 0.9,
+    bestStreak: 0,
+    achievementsUnlocked: [],
+    finishedAt: new Date(0).toISOString(),
+  };
+
+  it('reports the closest not-yet-unlocked achievement as a human-readable gap', () => {
+    // 24 wpm -> 6 short of the 30 WPM Club, the closest computable gap here.
+    expect(closestAchievementMiss(baseResult, DEFAULT_STATS, 0)).toBe(
+      '6 more WPM for the 30 WPM Club',
+    );
+  });
+
+  it('returns null once nothing computable remains open', () => {
+    const maxedOut = {
+      ...DEFAULT_STATS,
+      achievementsUnlocked: [
+        'wpm-30',
+        'wpm-50',
+        'wpm-70',
+        'wpm-90',
+        'wpm-110',
+        'streak-10',
+        'streak-day-7',
+        'streak-day-30',
+        'streak-day-100',
+      ] as const,
+    };
+    expect(
+      closestAchievementMiss({ ...baseResult, wpm: 150, bestStreak: 10 }, maxedOut, 100),
+    ).toBeNull();
   });
 });
