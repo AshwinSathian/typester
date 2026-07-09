@@ -1,5 +1,7 @@
 .app-segmented {
   display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   padding: var(--space-1);
   background: var(--color-surface-raised);
   border-radius: var(--radius-md);
