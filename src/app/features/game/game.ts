@@ -30,7 +30,7 @@ import { StatBadge } from '../../shared/ui/stat-badge/stat-badge';
 import { TimerRing } from '../../shared/ui/timer-ring/timer-ring';
 
 type Phase = 'loading' | 'playing' | 'finished';
-type Feedback = 'none' | 'correct' | 'incorrect';
+type Feedback = 'none' | 'correct' | 'near' | 'incorrect';
 
 const TICK_INTERVAL_MS = 100;
 /** Correct feedback stays instant (DESIGN-typester.md §Sound); incorrect
@@ -59,15 +59,17 @@ export class Game implements OnInit {
   protected readonly phase = signal<Phase>('loading');
   protected readonly snapshot = signal<SessionSnapshot | null>(null);
   protected readonly remainingSeconds = signal(0);
+  protected readonly elapsedMs = signal(0);
   protected readonly feedback = signal<Feedback>('none');
   protected readonly typedValue = signal('');
   protected readonly showExitConfirm = signal(false);
 
-  /** Per-character diff of the last incorrect submission against the target
-   *  word - a precision-instrument detail (DESIGN-typester.md §Game) showing
-   *  exactly which keystrokes were wrong, not just that the word was wrong. */
+  /** Per-character diff of the last incorrect (or near-miss) submission
+   *  against the target word - a precision-instrument detail
+   *  (DESIGN-typester.md §Game) showing exactly which keystrokes were
+   *  wrong, not just that the word was wrong. */
   protected readonly mistypedChars = computed<readonly boolean[]>(() => {
-    if (this.feedback() !== 'incorrect') return [];
+    if (this.feedback() !== 'incorrect' && this.feedback() !== 'near') return [];
     const target = this.snapshot()?.currentWord?.text ?? '';
     const typed = this.typedValue();
     const length = Math.max(target.length, typed.length);
@@ -75,6 +77,18 @@ export class Game implements OnInit {
       { length },
       (_, i) => (typed[i] ?? '').toLowerCase() !== (target[i] ?? '').toLowerCase(),
     );
+  });
+
+  /** Live-updating WPM, refreshed on the same 100ms tick that already
+   *  drives the countdown (TICK_INTERVAL_MS) - no second interval. Mirrors
+   *  GameSession.result()'s formula exactly, using the same elapsed-ms
+   *  snapshot captured at the instant a round-ending submit/expiry happens,
+   *  so the live value converges on the Results-screen value at round end. */
+  protected readonly liveWpm = computed(() => {
+    const snap = this.snapshot();
+    const elapsedMinutes = this.elapsedMs() / 60_000;
+    if (!snap || elapsedMinutes <= 0) return 0;
+    return Math.round(snap.correctChars / 5 / elapsedMinutes);
   });
 
   protected readonly config = computed<GameConfig>(() => ({
@@ -199,17 +213,25 @@ export class Game implements OnInit {
     const value = inputEl.value;
     if (!value.trim()) return;
 
-    const outcome = this.session.submit(value, Date.now());
+    const nowMs = Date.now();
+    const outcome = this.session.submit(value, nowMs);
     this.snapshot.set(outcome.snapshot);
-    this.showFeedback(outcome.correct ? 'correct' : 'incorrect');
+    this.elapsedMs.set(nowMs - this.startedAtMs);
+    this.showFeedback(outcome.correct ? 'correct' : outcome.nearMiss ? 'near' : 'incorrect');
 
+    // The input clears on every submission, correct or not - an incorrect
+    // guess used to leave stray characters behind, forcing a manual clear
+    // before retrying (PLAN-typester-growth.md Executive Diagnosis #8). The
+    // per-character diff still reads correctly afterwards because it's
+    // driven by the `typedValue` signal, which only updates on the next
+    // keystroke via onInput(), not by this DOM clear.
+    inputEl.value = '';
     if (outcome.correct) {
-      inputEl.value = '';
       this.typedValue.set('');
       const streak = outcome.snapshot.streak;
       this.sound.play(streak > 0 && streak % 5 === 0 ? 'combo' : 'correct');
     } else {
-      this.sound.play('incorrect');
+      this.sound.play(outcome.nearMiss ? 'nearMiss' : 'incorrect');
     }
 
     if (outcome.finished) {
@@ -228,6 +250,7 @@ export class Game implements OnInit {
     this.startedAtMs = Date.now();
     this.snapshot.set(this.session.start(this.startedAtMs));
     this.remainingSeconds.set(config.durationSeconds);
+    this.elapsedMs.set(0);
     this.phase.set('playing');
 
     this.intervalId = setInterval(() => this.tick(), TICK_INTERVAL_MS);
@@ -256,12 +279,14 @@ export class Game implements OnInit {
 
   private tick(): void {
     if (!this.session) return;
-    const elapsedSeconds = (Date.now() - this.startedAtMs) / 1000;
+    const nowMs = Date.now();
+    this.elapsedMs.set(nowMs - this.startedAtMs);
+    const elapsedSeconds = (nowMs - this.startedAtMs) / 1000;
     const remaining = Math.max(0, this.config().durationSeconds - elapsedSeconds);
     this.remainingSeconds.set(remaining);
 
     if (remaining <= 0) {
-      this.snapshot.set(this.session.expireTime(Date.now()));
+      this.snapshot.set(this.session.expireTime(nowMs));
       this.sound.play('timeUp');
       this.endRound();
     }

@@ -128,6 +128,16 @@
   animation: game-shake var(--duration-slow) var(--ease-standard);
 }
 
+/* Near-miss (edit-distance-1 typo) reads as "close", not "wrong" - a
+   distinct --color-warning treatment with a half-amplitude shake, not just
+   a paler danger color (accessibility checklist: color is never the only
+   signal). The streak still resets identically to a full miss - this is a
+   feedback distinction only, never a scoring difference. */
+.game__word--near {
+  color: var(--color-warning);
+  animation: game-shake-near var(--duration-slow) var(--ease-standard);
+}
+
 .game__input {
   width: min(90vw, 20rem);
   font-family: var(--font-mono);
@@ -157,6 +167,11 @@
   animation: game-shake var(--duration-slow) var(--ease-standard);
 }
 
+.game__input--near {
+  border-color: var(--color-warning);
+  animation: game-shake-near var(--duration-slow) var(--ease-standard);
+}
+
 @keyframes game-pop {
   from {
     transform: scale(1.08);
@@ -183,6 +198,28 @@
   40%,
   60% {
     transform: translateX(5px);
+  }
+}
+
+/* Half the amplitude of game-shake - "close" reads as a smaller nudge, not
+   the same jolt as a completely wrong word. */
+@keyframes game-shake-near {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(1.5px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-2.5px);
+  }
+  40%,
+  60% {
+    transform: translateX(2.5px);
   }
 }
 

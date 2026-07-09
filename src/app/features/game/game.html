@@ -33,6 +33,7 @@
         class="game__word"
         [class.game__word--power]="snap.currentWord?.isPowerWord"
         [class.game__word--correct]="feedback() === 'correct'"
+        [class.game__word--near]="feedback() === 'near'"
         [class.game__word--incorrect]="feedback() === 'incorrect'"
       >
         {{ snap.currentWord?.text }}
@@ -42,6 +43,7 @@
         #answerInput
         class="game__input"
         [class.game__input--correct]="feedback() === 'correct'"
+        [class.game__input--near]="feedback() === 'near'"
         [class.game__input--incorrect]="feedback() === 'incorrect'"
         type="text"
         autocomplete="off"
@@ -53,7 +55,7 @@
         (keydown.escape)="onEscape()"
       />
 
-      @if (feedback() === 'incorrect') {
+      @if (feedback() === 'incorrect' || feedback() === 'near') {
         <div class="game__diff" aria-hidden="true">
           @for (wrong of mistypedChars(); track $index) {
             <span class="game__diff-char" [class.game__diff-char--wrong]="wrong">{{
@@ -67,6 +69,7 @@
     <div class="game__stats">
       <app-stat-badge label="Score" [value]="snap.score" />
       <app-stat-badge label="Streak" [value]="snap.streak" />
+      <app-stat-badge label="WPM" [value]="liveWpm()" />
       @if (snap.multiplier > 1) {
         <app-stat-badge label="Combo" [value]="snap.multiplier" suffix="×" variant="energy" />
       }

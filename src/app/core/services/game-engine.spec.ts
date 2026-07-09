@@ -6,6 +6,7 @@ import {
   WordPools,
   buildRoundWords,
   evaluateAchievements,
+  isNearMiss,
   multiplierForStreak,
 } from './game-engine';
 
@@ -63,6 +64,24 @@ describe('buildRoundWords', () => {
     const config: GameConfig = { mode: 'timed', difficulty: 'hard', durationSeconds: 30 };
     const words = buildRoundWords(config, pools, () => 0); // rng() always 0 -> would be a power word if allowed
     expect(words[0].isPowerWord).toBe(false);
+  });
+});
+
+describe('isNearMiss', () => {
+  it('is true for a single-character substitution, insertion, or deletion', () => {
+    expect(isNearMiss('cot', 'cat')).toBe(true);
+    expect(isNearMiss('cats', 'cat')).toBe(true);
+    expect(isNearMiss('ca', 'cat')).toBe(true);
+  });
+
+  it('is false for an exact match or anything more than one edit away', () => {
+    expect(isNearMiss('cat', 'cat')).toBe(false);
+    expect(isNearMiss('dog', 'cat')).toBe(false);
+    expect(isNearMiss('cot', 'cats')).toBe(false); // 2 edits (substitution + insertion)
+  });
+
+  it('is case-insensitive and trims whitespace, same as the exact-match check', () => {
+    expect(isNearMiss('  COT  ', 'cat')).toBe(true);
   });
 });
 
@@ -154,6 +173,35 @@ describe('GameSession', () => {
     session.submit('cat', 3_000);
     session.submit('dog', 6_000);
     expect(session.result().wpm).toBe(12);
+  });
+
+  it('flags a near-miss (edit-distance-1) submission without treating it as correct', () => {
+    const session = new GameSession(config, [entry('cat'), entry('dog')]);
+    session.start(0);
+    const outcome = session.submit('cot', 100);
+
+    expect(outcome.correct).toBe(false);
+    expect(outcome.nearMiss).toBe(true);
+    expect(outcome.snapshot.wordIndex).toBe(0); // did not advance
+    expect(outcome.snapshot.streak).toBe(0); // near-miss still resets the streak
+  });
+
+  it('does not flag a completely wrong word as a near-miss', () => {
+    const session = new GameSession(config, [entry('cat')]);
+    session.start(0);
+    const outcome = session.submit('xyz', 100);
+
+    expect(outcome.nearMiss).toBe(false);
+  });
+
+  it('exposes running correctChars in the snapshot for a live WPM reading', () => {
+    const session = new GameSession(config, [entry('cat'), entry('dog')]);
+    session.start(0);
+    expect(session.snapshot().correctChars).toBe(0);
+    session.submit('cat', 1_000);
+    expect(session.snapshot().correctChars).toBe(3);
+    session.submit('dog', 2_000);
+    expect(session.snapshot().correctChars).toBe(6);
   });
 });
 

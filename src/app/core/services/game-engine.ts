@@ -31,10 +31,18 @@ export interface SessionSnapshot {
   readonly multiplier: number;
   readonly correctCount: number;
   readonly incorrectCount: number;
+  /** Correct characters typed so far this round - the same figure the final
+   *  WPM formula divides by elapsed minutes; exposed so the Game screen can
+   *  compute a *live* WPM reading without duplicating the formula. */
+  readonly correctChars: number;
 }
 
 export interface SubmitOutcome {
   readonly correct: boolean;
+  /** A single-character-edit typo on an otherwise-incorrect submission - a
+   *  feedback distinction only, not scoring leniency (see near-miss risk
+   *  note in PLAN-typester-growth.md §Risks: the streak still resets). */
+  readonly nearMiss: boolean;
   readonly finished: boolean;
   readonly snapshot: SessionSnapshot;
 }
@@ -51,6 +59,30 @@ export function multiplierForStreak(streak: number): number {
 
 function normalize(input: string): string {
   return input.trim().toLowerCase();
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dp: number[][] = Array.from({ length: rows }, () => new Array<number>(cols).fill(0));
+  for (let i = 0; i < rows; i++) dp[i][0] = i;
+  for (let j = 0; j < cols; j++) dp[0][j] = j;
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[rows - 1][cols - 1];
+}
+
+/** A near-miss is exactly one character off from the target - close enough
+ *  to deserve a distinct (warning, not danger) feedback tier. Case/whitespace
+ *  insensitive, same normalization as the exact-match check. */
+export function isNearMiss(typed: string, target: string): boolean {
+  return levenshteinDistance(normalize(typed), normalize(target)) === 1;
 }
 
 function shuffle<T>(items: readonly T[], rng: () => number): T[] {
@@ -147,6 +179,7 @@ export class GameSession {
 
     const target = this.words[this.index];
     const correct = normalize(input) === normalize(target.text);
+    const nearMiss = !correct && isNearMiss(input, target.text);
 
     if (correct) {
       this.correctCount++;
@@ -167,7 +200,7 @@ export class GameSession {
       this.finish(nowMs);
     }
 
-    return { correct, finished: exhausted, snapshot: this.snapshot() };
+    return { correct, nearMiss, finished: exhausted, snapshot: this.snapshot() };
   }
 
   /** Called by the Angular wrapper's timer when the clock reaches zero. */
@@ -195,6 +228,7 @@ export class GameSession {
       multiplier: multiplierForStreak(this.streak),
       correctCount: this.correctCount,
       incorrectCount: this.incorrectCount,
+      correctChars: this.correctChars,
     };
   }
 

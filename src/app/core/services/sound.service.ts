@@ -3,7 +3,7 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 
 import { StorageService } from './storage.service';
 
-export type SoundCue = 'correct' | 'incorrect' | 'combo' | 'timeUp';
+export type SoundCue = 'correct' | 'incorrect' | 'nearMiss' | 'combo' | 'timeUp';
 
 interface ToneSpec {
   readonly type: OscillatorType;
@@ -55,6 +55,12 @@ export class SoundService {
       case 'incorrect':
         return [
           { type: 'square', startFreq: 180, endFreq: 180, startTime: 0, duration: 0.1, gain: 0.15 },
+        ];
+      case 'nearMiss':
+        // Same shape as 'incorrect', pitched higher - reads as "close, not
+        // wrong" (a single-parameter variant, not a new cue category).
+        return [
+          { type: 'square', startFreq: 260, endFreq: 260, startTime: 0, duration: 0.1, gain: 0.15 },
         ];
       case 'combo':
         return [660, 880, 1100].map((freq, i) => ({

@@ -74,6 +74,39 @@ describe('Game', () => {
     expect(el.querySelector('.app-stat-badge__value')?.textContent?.trim()).toBe('0');
   });
 
+  it('clears the input after an incorrect submission, identically to a correct one', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+    const input = el.querySelector('.game__input') as HTMLInputElement;
+
+    input.value = 'zzz-not-a-word';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(input.value).toBe('');
+
+    // A second wrong attempt right after, with no manual clear in between.
+    input.value = 'still-wrong';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(input.value).toBe('');
+  });
+
+  it('shows a near-miss (not full-incorrect) treatment for a single-character typo', async () => {
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+    const word = el.querySelector('.game__word')?.textContent?.trim() ?? '';
+    const input = el.querySelector('.game__input') as HTMLInputElement;
+
+    input.value = `${word.slice(0, -1)}x`; // one character off
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(el.querySelector('.game__word--near')).not.toBeNull();
+    expect(el.querySelector('.game__word--incorrect')).toBeNull();
+  });
+
   it('a correct submission clears the input, advances, and scores', async () => {
     const fixture = await createGame();
     const el = fixture.nativeElement as HTMLElement;
@@ -111,6 +144,27 @@ describe('Game', () => {
         }),
       }),
     );
+  });
+
+  it('live WPM converges to the Results-screen value at round end', async () => {
+    const fixture = await createGame('30');
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    for (let i = 0; i < 2; i++) {
+      const el = fixture.nativeElement as HTMLElement;
+      const word = el.querySelector('.game__word')?.textContent?.trim() ?? '';
+      const input = el.querySelector('.game__input') as HTMLInputElement;
+      await vi.advanceTimersByTimeAsync(1_000);
+      input.value = word;
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    const finalLiveWpm = fixture.componentInstance['liveWpm']();
+    const resultWpm = (navigateSpy.mock.calls[0][1] as { state: { result: { wpm: number } } }).state
+      .result.wpm;
+    expect(finalLiveWpm).toBe(resultWpm);
   });
 
   it('ends the round and navigates when the timer runs out', async () => {
