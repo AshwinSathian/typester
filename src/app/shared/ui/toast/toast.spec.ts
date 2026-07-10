@@ -61,4 +61,20 @@ describe('Toast', () => {
 
     expect(fixture.componentInstance.dismissCount).toBe(1);
   });
+
+  it('dismisses on Escape even when focus never moved to the toast itself', () => {
+    // The toast never receives focus automatically (it's a passive
+    // role="status" region, not a modal) - a keyboard user dismissing it
+    // presses Escape from wherever focus already is (e.g. the button that
+    // triggered it), not from the toast. The dismiss listener must be
+    // document-level, not scoped to the toast element, or Escape silently
+    // does nothing in that (the actual, common) case.
+    const fixture = TestBed.createComponent(TestHost);
+    fixture.detectChanges();
+    expect(document.activeElement).not.toBe(fixture.nativeElement.querySelector('.app-toast'));
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(fixture.componentInstance.dismissCount).toBe(1);
+  });
 });

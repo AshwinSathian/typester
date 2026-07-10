@@ -91,6 +91,67 @@ export function isNearMiss(typed: string, target: string): boolean {
   return levenshteinDistance(normalize(typed), normalize(target)) === 1;
 }
 
+/**
+ * Per-character diff of a submission against its target word, aligned via
+ * an edit-distance backtrace rather than raw index position - so a single
+ * dropped or inserted character doesn't cascade into every character after
+ * it reading as "wrong" (a naive `typed[i] !== target[i]` compare would
+ * flag the entire tail of the word once the strings shift out of phase).
+ * Returns one boolean per character of `typed` - true where that character
+ * was a substitution or an extra insertion. A deleted (missing) target
+ * character has no corresponding typed index, so it can't be flagged this
+ * way - the Game screen represents "typed ran short" separately by padding
+ * its rendered diff past `typed.length` (see Game.mistypedChars).
+ */
+export function diffAgainstTarget(typed: string, target: string): readonly boolean[] {
+  const a = typed;
+  const b = target;
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dp: number[][] = Array.from({ length: rows }, () => new Array<number>(cols).fill(0));
+  for (let i = 0; i < rows; i++) dp[i][0] = i;
+  for (let j = 0; j < cols; j++) dp[0][j] = j;
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      dp[i][j] =
+        a[i - 1].toLowerCase() === b[j - 1].toLowerCase()
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+
+  const wrongByTypedIndex = new Array<boolean>(a.length).fill(false);
+  let i = rows - 1;
+  let j = cols - 1;
+  while (i > 0 || j > 0) {
+    const isMatch = i > 0 && j > 0 && a[i - 1].toLowerCase() === b[j - 1].toLowerCase();
+    // Insertion is checked before a free diagonal match: on a repeated
+    // character (e.g. typed "catt" against target "cat"), both a match and
+    // an insertion are simultaneously valid at this cell - preferring
+    // insertion resolves the tie by flagging the *later* occurrence of the
+    // repeated character as the extra one, which reads more intuitively
+    // than flagging an earlier, identical character instead.
+    if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+      wrongByTypedIndex[i - 1] = true;
+      i--;
+    } else if (isMatch && dp[i][j] === dp[i - 1][j - 1]) {
+      i--;
+      j--;
+    } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
+      // Substitution - the typed character replaced a different target one.
+      wrongByTypedIndex[i - 1] = true;
+      i--;
+      j--;
+    } else {
+      // Deletion - a target character with no typed counterpart; nothing
+      // to flag on the typed side.
+      j--;
+    }
+  }
+
+  return wrongByTypedIndex;
+}
+
 function shuffle<T>(items: readonly T[], rng: () => number): T[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -286,11 +347,17 @@ export class GameSession {
     const attempts = this.correctCount + this.incorrectCount;
     const accuracy = attempts > 0 ? this.correctCount / attempts : 0;
 
+    // Endless/Survival reuses config.durationSeconds to mean "lives", not
+    // seconds (see the constructor's mistakesAllowed param) - it has no
+    // clock, so it can never earn a time bonus regardless of how the round
+    // ended. Gating on mistakesAllowed === null (rather than re-deriving
+    // config.mode !== 'endless') ties this directly to the same signal that
+    // already distinguishes "this session has a real clock".
+    const hasClock = this.mistakesAllowed === null;
     const exhausted = this.index >= this.words.length;
-    const remainingMs = Math.max(0, this.config.durationSeconds * 1000 - elapsedMs);
-    const timeBonus = exhausted
-      ? Math.floor((remainingMs / 1000) * TIME_BONUS_POINTS_PER_SECOND)
-      : 0;
+    const remainingMs = hasClock ? Math.max(0, this.config.durationSeconds * 1000 - elapsedMs) : 0;
+    const timeBonus =
+      exhausted && hasClock ? Math.floor((remainingMs / 1000) * TIME_BONUS_POINTS_PER_SECOND) : 0;
 
     return {
       config: this.config,

@@ -14,7 +14,7 @@ import { Component, effect, input, output } from '@angular/core';
       aria-live="polite"
       tabindex="0"
       (click)="dismiss()"
-      (keydown.escape)="dismiss()"
+      (document:keydown.escape)="dismiss()"
     >
       {{ message() }}
     </div>

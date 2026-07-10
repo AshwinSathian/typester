@@ -6,6 +6,7 @@ import {
   WordPools,
   buildRoundWords,
   closestAchievementMiss,
+  diffAgainstTarget,
   escalateByLength,
   evaluateAchievements,
   isNearMiss,
@@ -295,6 +296,22 @@ describe('GameSession — Endless/Survival mode (mistakesAllowed)', () => {
     const outcome = session.submit('cat', 100);
     expect(outcome.finished).toBe(false);
   });
+
+  it('never awards a time bonus, even when the word pool is exhausted well inside the "lives" count treated as seconds', () => {
+    // config.durationSeconds is 3 here, meaning 3 lives - not 3 seconds.
+    // Exhausting a short word list in under 3 real seconds would previously
+    // misread that as "3000ms - elapsedMs" seconds left on a nonexistent
+    // clock and award a bogus bonus. Endless has no clock; it must always
+    // be 0, regardless of how fast the round finished.
+    const session = new GameSession(config, [entry('cat'), entry('dog')], 10);
+    session.start(0);
+    session.submit('cat', 500);
+    session.submit('dog', 900); // word list exhausted after 900ms, well under 3000ms
+    const result = session.result();
+
+    expect(result.timeBonus).toBe(0);
+    expect(result.totalScore).toBe(result.baseScore);
+  });
 });
 
 describe('evaluateAchievements', () => {
@@ -416,5 +433,37 @@ describe('closestAchievementMiss', () => {
     expect(
       closestAchievementMiss({ ...baseResult, wpm: 150, bestStreak: 10 }, maxedOut, 100),
     ).toBeNull();
+  });
+});
+
+describe('diffAgainstTarget', () => {
+  it('flags nothing when the typed value matches exactly', () => {
+    expect(diffAgainstTarget('cat', 'cat')).toEqual([false, false, false]);
+  });
+
+  it('flags only the substituted character, not the whole tail', () => {
+    // "cot" vs "cat" - a single substitution at index 1.
+    expect(diffAgainstTarget('cot', 'cat')).toEqual([false, true, false]);
+  });
+
+  it('does not cascade a single deletion into every character after it', () => {
+    // "anticipaton" is "anticipation" missing one 'i' - a single deletion,
+    // not three wrong characters. A naive positional compare would flag
+    // everything from the deletion point onward.
+    const diff = diffAgainstTarget('anticipaton', 'anticipation');
+    expect(diff.filter(Boolean)).toHaveLength(0);
+  });
+
+  it('flags an inserted extra character, not everything after it', () => {
+    // "catt" vs "cat" - one extra trailing character.
+    expect(diffAgainstTarget('catt', 'cat')).toEqual([false, false, false, true]);
+  });
+
+  it('is case-insensitive, matching the engine-wide normalization rule', () => {
+    expect(diffAgainstTarget('CAT', 'cat')).toEqual([false, false, false]);
+  });
+
+  it('flags every character of a completely different typed value', () => {
+    expect(diffAgainstTarget('xyz', 'cat')).toEqual([true, true, true]);
   });
 });

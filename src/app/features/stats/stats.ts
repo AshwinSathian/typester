@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ACHIEVEMENTS, AchievementDef, AchievementId } from '../../core/models/achievement';
-import { ComboDescriptor, allGameCombos } from '../../core/models/game-config';
+import { ComboDescriptor, allEndlessCombos, allGameCombos } from '../../core/models/game-config';
 import { BestScoreEntry } from '../../core/models/stats';
 import { StorageService } from '../../core/services/storage.service';
 import { Button } from '../../shared/ui/button/button';
@@ -20,6 +20,7 @@ export class Stats {
 
   protected readonly stats = this.storage.stats;
   protected readonly combos: readonly ComboDescriptor[] = allGameCombos();
+  protected readonly endlessCombos: readonly ComboDescriptor[] = allEndlessCombos();
   protected readonly achievements: readonly AchievementDef[] = ACHIEVEMENTS;
 
   protected readonly unlockedIds = computed(() => new Set(this.stats().achievementsUnlocked));

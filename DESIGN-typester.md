@@ -383,7 +383,13 @@ same labeled-card treatment established on Settings (`--shadow-sm`,
    (Quick Play + 3 difficulties × 3 durations). Beaten combos show their
    score; unbeaten combos show a muted "not yet attempted" placeholder with
    a direct "Play" action.
-3. **Achievements**: the full achievement set as chips — unlocked ones in
+3. **Endless best scores**: a separate section, same row treatment, for
+   Endless/Survival's own 9-combo set (3 difficulties × 3 lives counts).
+   Kept out of the 10-combo grid above (and out of Results' next-combo
+   cross-promotion, which stays scoped to Quick+Timed) since a lives count
+   isn't comparable to a duration — but still given its own place to be
+   seen at rest, per this doc's design philosophy #4.
+4. **Achievements**: the full achievement set as chips — unlocked ones in
    the celebratory style from Results, locked ones visibly locked (muted
    fill, dashed border, lock glyph — not just faded, since further opacity
    would drop below WCAG AA contrast) with a count in the section header.

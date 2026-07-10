@@ -14,8 +14,42 @@ describe('Stats', () => {
     const fixture = TestBed.createComponent(Stats);
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll('.stats__combo-row');
+    const rows = fixture.nativeElement.querySelectorAll(
+      '.stats__card--best-scores .stats__combo-row',
+    );
     expect(rows).toHaveLength(10);
+  });
+
+  it('renders all 9 Endless combos (3 difficulties x 3 lives) in their own section', () => {
+    const fixture = TestBed.createComponent(Stats);
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll('.stats__card--endless .stats__combo-row');
+    expect(rows).toHaveLength(9);
+  });
+
+  it('shows a beaten Endless combo score, distinct from the Quick/Timed grid', () => {
+    const storage = TestBed.inject(StorageService);
+    storage.recordResult({
+      config: { mode: 'endless', difficulty: 'easy', durationSeconds: 5 },
+      wordsCorrect: 12,
+      wordsIncorrect: 2,
+      baseScore: 12,
+      timeBonus: 0,
+      totalScore: 12,
+      wpm: 30,
+      accuracy: 0.86,
+      bestStreak: 6,
+      achievementsUnlocked: [],
+      finishedAt: new Date().toISOString(),
+    });
+
+    const fixture = TestBed.createComponent(Stats);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelectorAll('.stats__card--endless .stats__combo-score')).toHaveLength(1);
+    expect(el.querySelectorAll('.stats__card--best-scores .stats__combo-score')).toHaveLength(0);
   });
 
   it('shows a Play action for an unplayed combo and a score for a beaten one', () => {

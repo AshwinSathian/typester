@@ -102,6 +102,17 @@ export class Results {
   }
 
   playAgain(): void {
+    // A daily-challenge result's config is just DAILY_CHALLENGE_CONFIG (no
+    // date) - routing from it directly would silently start a regular
+    // Timed/Medium/60s round instead of replaying the actual daily
+    // challenge, breaking both "same config, restarts immediately" and the
+    // dailyResults/bestScores bucket split (ARCHITECTURE.md §Data flow).
+    const daily = this.dailyChallenge();
+    if (daily) {
+      void this.router.navigate(['/play', 'daily', daily.date]);
+      return;
+    }
+
     const config = this.result()?.config;
     if (!config) return;
     void this.router.navigate(['/play', config.mode, config.difficulty, config.durationSeconds]);

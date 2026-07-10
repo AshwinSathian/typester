@@ -25,6 +25,7 @@ import {
   WordPools,
   buildRoundWords,
   closestAchievementMiss,
+  diffAgainstTarget,
 } from '../../core/services/game-engine';
 import { SoundService } from '../../core/services/sound.service';
 import { StorageService } from '../../core/services/storage.service';
@@ -90,11 +91,12 @@ export class Game implements OnInit {
     if (this.feedback() !== 'incorrect' && this.feedback() !== 'near') return [];
     const target = this.snapshot()?.currentWord?.text ?? '';
     const typed = this.typedValue();
+    const wrongByTypedIndex = diffAgainstTarget(typed, target);
     const length = Math.max(target.length, typed.length);
-    return Array.from(
-      { length },
-      (_, i) => (typed[i] ?? '').toLowerCase() !== (target[i] ?? '').toLowerCase(),
-    );
+    // Past the end of what was actually typed, there's nothing to align -
+    // those slots render as missing characters (see game.html's `?? '·'`)
+    // and are always "wrong" by construction.
+    return Array.from({ length }, (_, i) => (i < typed.length ? wrongByTypedIndex[i] : true));
   });
 
   /** Live-updating WPM, refreshed on the same 100ms tick that already

@@ -113,6 +113,37 @@ describe('Game', () => {
     expect(el.querySelector('.game__word--incorrect')).toBeNull();
   });
 
+  it('a dropped-character near-miss only underlines the one missing character, not the whole tail', async () => {
+    // "cat" -> "ca" (dropped the last character) is a single deletion, not
+    // a run of wrong characters - a naive position-by-position compare
+    // would have flagged nothing here (both existing characters happen to
+    // match), but a mid-word drop on a longer word previously cascaded
+    // into every character after it (see diffAgainstTarget's spec for the
+    // exact repro). This exercises the real rendering path end to end.
+    const fixture = await createGame();
+    const el = fixture.nativeElement as HTMLElement;
+    const word = el.querySelector('.game__word')?.textContent?.trim() ?? '';
+    const input = el.querySelector('.game__input') as HTMLInputElement;
+    const dropIndex = Math.floor(word.length / 2);
+    const typed = word.slice(0, dropIndex) + word.slice(dropIndex + 1); // drop one middle char
+
+    input.value = typed;
+    // The diff is rendered from the `typedValue` signal, which the real
+    // template only updates via the (input) event (see Game.onInput) - a
+    // real keystroke fires this before Enter; dispatch it explicitly here
+    // since setting .value programmatically does not.
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    fixture.detectChanges();
+
+    const wrongCount = el.querySelectorAll('.game__diff-char--wrong').length;
+    // Exactly one rendered slot should read "wrong": the trailing padding
+    // slot representing the one character that never got typed. None of
+    // the actually-typed characters (all of which are correct, just
+    // shifted) should be flagged.
+    expect(wrongCount).toBe(1);
+  });
+
   it('a correct submission clears the input, advances, and scores', async () => {
     const fixture = await createGame();
     const el = fixture.nativeElement as HTMLElement;

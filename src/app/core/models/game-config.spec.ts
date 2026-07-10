@@ -1,5 +1,5 @@
 import { DEFAULT_STATS } from './stats';
-import { allGameCombos, gameConfigKey, nextUnbeatenCombo } from './game-config';
+import { allEndlessCombos, allGameCombos, gameConfigKey, nextUnbeatenCombo } from './game-config';
 
 describe('allGameCombos', () => {
   it('enumerates exactly the 10-combo set: 1 Quick Play + 3 difficulties x 3 durations', () => {
@@ -12,6 +12,26 @@ describe('allGameCombos', () => {
   it('produces unique keys for every combo', () => {
     const keys = allGameCombos().map((c) => c.key);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('never includes an endless combo', () => {
+    expect(allGameCombos().some((c) => c.config.mode === 'endless')).toBe(false);
+  });
+});
+
+describe('allEndlessCombos', () => {
+  it('enumerates exactly the 9-combo set: 3 difficulties x 3 lives counts', () => {
+    const combos = allEndlessCombos();
+    expect(combos).toHaveLength(9);
+    expect(combos.every((c) => c.config.mode === 'endless')).toBe(true);
+  });
+
+  it('produces unique keys for every combo, disjoint from allGameCombos', () => {
+    const keys = allEndlessCombos().map((c) => c.key);
+    expect(new Set(keys).size).toBe(keys.length);
+
+    const gameKeys = new Set(allGameCombos().map((c) => c.key));
+    expect(keys.some((key) => gameKeys.has(key))).toBe(false);
   });
 });
 

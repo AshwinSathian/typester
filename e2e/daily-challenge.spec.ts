@@ -71,3 +71,21 @@ test('an invalid daily date redirects home', async ({ page }) => {
   await page.goto('/play/daily/2999-01-01');
   await page.waitForURL('**/');
 });
+
+test('Play Again from a daily-challenge Results screen replays the same daily challenge', async ({
+  page,
+}) => {
+  test.setTimeout(30_000);
+  const date = todayUtc();
+  await gotoReady(page, `/play/daily/${date}`);
+
+  await page.getByRole('button', { name: 'Exit round' }).click();
+  await page.getByRole('button', { name: 'Save score & exit' }).click();
+  await page.waitForURL('**/results');
+
+  await page.getByRole('button', { name: 'Play Again' }).click();
+  // Must return to the daily-challenge route, not a generic Timed/Medium/60
+  // round - the two share the same GameConfig shape, so this is the only
+  // observable way to confirm the daily identity survived.
+  await page.waitForURL(`**/play/daily/${date}`);
+});

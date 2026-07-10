@@ -199,6 +199,30 @@ describe('Results', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/play', 'timed', 'medium', 60]);
   });
 
+  it('replays the same daily challenge (not a generic Timed/Medium/60 round) on Play Again', () => {
+    window.history.replaceState(
+      {
+        result: fixtureResult(),
+        isNewBest: false,
+        dailyChallenge: {
+          date: '2026-07-09',
+          seed: 1,
+          config: fixtureResult().config,
+          dayNumber: 7,
+        },
+      },
+      '',
+    );
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(Results);
+    fixture.detectChanges();
+
+    fixture.componentInstance.playAgain();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/play', 'daily', '2026-07-09']);
+  });
+
   it('navigates home on Menu', () => {
     window.history.replaceState({ result: fixtureResult(), isNewBest: false }, '');
     const router = TestBed.inject(Router);

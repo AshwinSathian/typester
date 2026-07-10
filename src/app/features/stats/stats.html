@@ -19,8 +19,27 @@
 
   <section class="stats__section">
     <h2 class="stats__section-label">Best Scores</h2>
-    <div class="stats__card">
+    <div class="stats__card stats__card--best-scores">
       @for (combo of combos; track combo.key) {
+        <div class="stats__combo-row">
+          <span class="stats__combo-label">{{ combo.label }}</span>
+          @if (bestScoreFor(combo); as best) {
+            <span class="stats__combo-score">{{ best.totalScore }} pts · {{ best.wpm }} WPM</span>
+          } @else {
+            <div class="stats__combo-unplayed">
+              <span class="stats__combo-placeholder">Not yet attempted</span>
+              <app-button variant="ghost" (pressed)="playCombo(combo)">Play</app-button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="stats__section">
+    <h2 class="stats__section-label">Endless Best Scores</h2>
+    <div class="stats__card stats__card--endless">
+      @for (combo of endlessCombos; track combo.key) {
         <div class="stats__combo-row">
           <span class="stats__combo-label">{{ combo.label }}</span>
           @if (bestScoreFor(combo); as best) {

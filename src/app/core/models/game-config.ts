@@ -99,6 +99,30 @@ export function allGameCombos(): readonly ComboDescriptor[] {
 }
 
 /**
+ * Endless/Survival's own 9-combo set (3 difficulties x 3 lives counts).
+ * Endless results are keyed into the same Stats.bestScores table as
+ * Quick/Timed (gameConfigKey doesn't distinguish tables), but are
+ * deliberately left out of allGameCombos()'s fixed 10-combo set - Results'
+ * next-combo cross-promotion is scoped to Quick+Timed only. Without this,
+ * an Endless best score had no page where a player could see it again once
+ * earned, violating DESIGN.md's "every stat gets a place to be seen twice"
+ * principle - the Stats screen renders this as its own section.
+ */
+export function allEndlessCombos(): readonly ComboDescriptor[] {
+  const combos: ComboDescriptor[] = [];
+
+  for (const difficulty of DIFFICULTIES) {
+    for (const lives of ENDLESS_MISTAKE_OPTIONS) {
+      const config: GameConfig = { mode: 'endless', difficulty, durationSeconds: lives };
+      const label = `${difficulty.charAt(0).toUpperCase()}${difficulty.slice(1)} · ${lives} lives`;
+      combos.push({ config, key: gameConfigKey(config), label });
+    }
+  }
+
+  return combos;
+}
+
+/**
  * The next not-yet-beaten combo after `current` in the fixed 10-combo
  * order (wrapping around), for Results' cross-promotion action. Returns
  * null once every combo already has a best score - never suggests one
