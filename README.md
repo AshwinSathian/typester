@@ -30,7 +30,7 @@ system spec (tokens, components, screen-by-screen behavior).
 ## Stack
 
 Angular 22 · zoneless · standalone · signals · Signal Forms · Tailwind CSS v4
-· Vitest · Playwright · self-hosted via Caddy + Cloudflare Tunnel.
+· Vitest · Playwright · Cloudflare Pages.
 
 ## Requirements
 
@@ -63,9 +63,9 @@ Node server required at runtime (see ARCHITECTURE.md §D2 for why).
 
 ## Deployment
 
-Self-hosted: a local Caddy static server, exposed via a Cloudflare Tunnel to
-`typester.ashwinsathian.com`. Setup and subsequent deploys are documented in
-[ops/README.md](./ops/README.md).
+Cloudflare Pages, Git-connected to this repo. Every push to `main` triggers a
+build (`npm run build -- --configuration production`) and deploy — no GitHub
+Actions, no local infrastructure. Custom domain: `typester.ashwinsathian.com`.
 
 ## Project structure
 
@@ -76,7 +76,6 @@ src/app/
   shared/     ui/  — presentational design-system primitives
               data/ — bundled word bank + themed word packs (offline fallback)
 e2e/          Playwright specs (flows + axe accessibility)
-ops/          Caddyfile, cloudflared config, launchd services, deploy script
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for routes, data flow, and the full

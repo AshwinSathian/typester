@@ -28,20 +28,13 @@ Karma, Protractor) had concrete problems each decision below traces back to:
 ## System
 
 ```
-┌─────────────────────────────┐        outbound-only         ┌──────────────────────┐
-│  Ashwin's Mac                │ ───────────────────────────▶ │ Cloudflare edge      │
-│                              │      (cloudflared tunnel)     │ typester.ashwinsathian│
-│  ┌────────────────────────┐  │                               │ .com (TLS terminated)│
-│  │ Caddy :8787 (loopback) │◀─┼── cloudflared ingress          └──────────┬───────────┘
-│  │ serves dist/.../browser│  │                                            │
-│  └────────────────────────┘  │                                            ▼
-│  ~/.typester/releases/*     │                                    end user's browser
-└──────────────────────────────┘
+GitHub (main)  ──push──▶  Cloudflare Pages build  ──▶  typester.ashwinsathian.com
+                           (npm run build -- --configuration production)
 ```
 
-No inbound port is ever opened on the home network — `cloudflared` holds an
-outbound connection to Cloudflare's edge, and Caddy only listens on
-`localhost`. Setup, deploys, and troubleshooting: [ops/README.md](./ops/README.md).
+Cloudflare Pages is Git-connected to this repo: every push to `main` triggers
+a build and deploy directly on Cloudflare's edge. No self-hosted origin, no
+tunnel, no local process to keep alive.
 
 ## Folder structure
 
@@ -58,7 +51,6 @@ src/app/
     ui/         presentational design-system primitives
     data/       bundled word bank (offline fallback) + themed word packs
 e2e/            Playwright specs (flows + axe accessibility)
-ops/            Caddyfile, cloudflared config, launchd services, deploy script
 ```
 
 ## Routes
@@ -233,10 +225,9 @@ be a server-backed guarantee.
 - **No backend, accounts, or cross-device sync.** All persistence is
   per-browser `localStorage`. Accepted: a database would be a recurring-cost
   and attack-surface liability disproportionate to this app's needs.
-- **Single point of failure.** If the host Mac or home internet is down,
-  `typester.ashwinsathian.com` is unreachable. Accepted for a personal
-  project with no uptime SLA — see [ops/README.md](./ops/README.md) for
-  recovery steps.
+- **No live Node server, so no server-side incident surface.** Cloudflare
+  Pages serves the prerendered static output directly from the edge —
+  nothing to keep alive, patch, or fail over on this end.
 - **Bundled word bank is static.** Adding new fallback words requires a code
   change + redeploy, not a CMS — acceptable since it's only the offline
   fallback path, not the primary word source.
