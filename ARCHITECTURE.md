@@ -28,12 +28,16 @@ Karma, Protractor) had concrete problems each decision below traces back to:
 ## System
 
 ```
-GitHub (main)  ──push──▶  Cloudflare Pages build  ──▶  typester.ashwinsathian.com
-                           (npm run build -- --configuration production)
+GitHub (main)  ──push──▶  Cloudflare Workers Build  ──▶  typester.ashwinsathian.com
+                           (npm run build -- --configuration production
+                            && npx wrangler deploy)
 ```
 
-Cloudflare Pages is Git-connected to this repo: every push to `main` triggers
-a build and deploy directly on Cloudflare's edge. No self-hosted origin, no
+Cloudflare Workers Builds is Git-connected to this repo: every push to `main`
+triggers a build and deploy directly on Cloudflare's edge. The deployed
+Worker has no server-side script (`wrangler.jsonc` has no `main`) — it's a
+static-assets-only Worker, with SPA fallback handled by
+`not_found_handling: "single-page-application"`. No self-hosted origin, no
 tunnel, no local process to keep alive.
 
 ## Folder structure

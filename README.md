@@ -30,7 +30,7 @@ system spec (tokens, components, screen-by-screen behavior).
 ## Stack
 
 Angular 22 · zoneless · standalone · signals · Signal Forms · Tailwind CSS v4
-· Vitest · Playwright · Cloudflare Pages.
+· Vitest · Playwright · Cloudflare Workers (static assets).
 
 ## Requirements
 
@@ -63,9 +63,14 @@ Node server required at runtime (see ARCHITECTURE.md §D2 for why).
 
 ## Deployment
 
-Cloudflare Pages, Git-connected to this repo. Every push to `main` triggers a
-build (`npm run build -- --configuration production`) and deploy — no GitHub
-Actions, no local infrastructure. Custom domain: `typester.ashwinsathian.com`.
+Cloudflare Workers (static assets), Git-connected to this repo via Workers
+Builds. Every push to `main` triggers a build
+(`npm run build -- --configuration production`) and deploy
+(`npx wrangler deploy`) — no GitHub Actions, no local infrastructure. The
+build output (`dist/typester/browser`) is served directly as static assets,
+with `wrangler.jsonc`'s `not_found_handling: "single-page-application"`
+covering client-side route fallback. Custom domain:
+`typester.ashwinsathian.com`.
 
 ## Project structure
 
