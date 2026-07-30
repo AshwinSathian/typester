@@ -1,5 +1,8 @@
 # Typester
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-typester.ashwinsathian.com-2ea44f)](https://typester.ashwinsathian.com)
+
 A keyboard-first typing speed game. A word appears, you type it, you race the
 clock — chase a streak multiplier, catch power words for bonus points, and
 beat your best score.
