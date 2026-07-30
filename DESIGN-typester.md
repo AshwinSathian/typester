@@ -1,8 +1,8 @@
 # Design: Typester
 
 > Companion to [ARCHITECTURE.md](./ARCHITECTURE.md). This is the living
-> design-system reference: tokens, components, and screen-by-screen behavior
-> — concrete and specific enough to hold every screen to a binary bar,
+> design-system reference: tokens, components, and screen-by-screen behavior,
+> concrete and specific enough to hold every screen to a binary bar,
 > rather than "make it look nice."
 
 ## Design philosophy
@@ -18,7 +18,7 @@ satisfying, or get out of the way. Four rules:
    timeout each get a distinct, sub-150ms visual + audio cue. No feedback
    should require the user to read text to understand what happened.
 3. **Calm everywhere else.** Home, Settings, Help are quiet, generously
-   spaced, and slow down the motion — contrast is what makes the Game
+   spaced, and slow down the motion: contrast is what makes the Game
    screen's speed feel intentional rather than just "busy."
 4. **Every number Typester already computes gets a place to be seen twice**:
    once in the moment (Results, live during a round), and once later, at
@@ -28,9 +28,9 @@ satisfying, or get out of the way. Four rules:
 ## Tokens
 
 All tokens are CSS custom properties on `:root`, consumed directly by
-Tailwind v4's `@theme` — no hardcoded hex/px values anywhere else in the app.
+Tailwind v4's `@theme`. No hardcoded hex/px values anywhere else in the app.
 
-### Color — OKLCH, light + dark
+### Color: OKLCH, light + dark
 
 OKLCH is used because it's perceptually uniform: lightening/darkening a token
 by a fixed `L` step looks consistent across hues, which plain HSL doesn't
@@ -39,18 +39,18 @@ hardcode a color.
 
 ```css
 :root {
-  /* Brand — text/link/decorative use vs. filled buttons/badges each need a
+  /* Brand: text/link/decorative use vs. filled buttons/badges each need a
      different lightness to hit 4.5:1 in their own context. */
   --color-accent: oklch(42% 0.19 265); /* indigo-leaning blue */
   --color-accent-strong: oklch(38% 0.2 265);
 
-  /* Energy accent — a distinct warm hue reserved for in-round momentum
+  /* Energy accent: a distinct warm hue reserved for in-round momentum
      (combo multiplier, power words, streak) so it never competes with
      --color-accent's job of marking primary actions/navigation. */
   --color-energy: oklch(52% 0.19 55);
   --color-energy-strong: oklch(46% 0.2 55);
 
-  /* Semantic feedback — must stay legible at both lightness extremes */
+  /* Semantic feedback: must stay legible at both lightness extremes */
   --color-success: oklch(70% 0.17 152); /* correct word */
   --color-danger: oklch(63% 0.22 25); /* incorrect word / time up */
   --color-warning: oklch(78% 0.15 85); /* low time remaining / near-miss */
@@ -87,21 +87,21 @@ via `StorageService`).
 
 **Contrast requirement (binary AC)**: `--color-text` on `--color-bg` and
 `--color-text` on `--color-surface` must both measure ≥4.5:1 (WCAG AA normal
-text) in both themes — verify with any contrast checker before shipping a
+text) in both themes: verify with any contrast checker before shipping a
 token change. Locked/muted UI (e.g. Stats' locked achievement chips) stays
 legible by relying on `--color-text-muted`'s existing contrast margin rather
 than further opacity fades, which can drop below 4.5:1.
 
 ### Typography
 
-Two self-hosted variable fonts (no Google Fonts CDN — avoids a third-party
+Two self-hosted variable fonts (no Google Fonts CDN: avoids a third-party
 network request, keeps the PWA fully offline-capable, and avoids any
 per-request tracking):
 
-- **UI text**: Inter (OFL-licensed, self-hosted `.woff2`) — chrome, buttons,
-  body copy, Settings/Help/Stats.
+- **UI text**: Inter (OFL-licensed, self-hosted `.woff2`), used for chrome,
+  buttons, body copy, Settings/Help/Stats.
 - **Word display + typing input**: a monospace, e.g. JetBrains Mono or Geist
-  Mono (both OFL/open, self-hosted) — used for the current word, the
+  Mono (both OFL/open, self-hosted), used for the current word, the
   look-ahead word strip, the answer field, and the share card. Monospace
   here is a deliberate identity choice, not a default: it reads as
   "precision instrument" and every character advances the same visual
@@ -125,7 +125,7 @@ per-request tracking):
 
 ### Spacing & radius
 
-4px base scale (Tailwind's default already aligns with this — no custom
+4px base scale (Tailwind's default already aligns with this, no custom
 override needed beyond confirming `--radius-*` for the native `<dialog>` and
 card surfaces):
 
@@ -187,20 +187,20 @@ card surfaces):
 ```
 
 **Binary AC**: every `transition`/`animation` in the app must reference one
-of these duration tokens — so the single reduced-motion override above makes
+of these duration tokens, so the single reduced-motion override above makes
 the entire app instant, with no per-component reduced-motion branching logic
 needed. This applies equally to newer motion (the Home auto-typing preview,
 the word look-ahead strip's shift animation): both freeze/instant-swap
 rather than just running slower.
 
 Route transitions use the Router's `withViewTransitions()` (native View
-Transitions API) — a cross-fade/slight-scale between screens. Within-screen
+Transitions API), a cross-fade/slight-scale between screens. Within-screen
 micro-interactions (button press, word-correct pop, combo glow) are plain CSS
 transitions/keyframes using the tokens above.
 
 ### Sound
 
-Synthesized via Web Audio API (`SoundService`, ARCHITECTURE.md §D7) — no
+Synthesized via Web Audio API (`SoundService`, ARCHITECTURE.md §D7). No
 shipped audio files. Five cues, each ≤150ms:
 
 | Event                             | Character              | Rough synthesis                     |
@@ -212,14 +212,14 @@ shipped audio files. Five cues, each ≤150ms:
 | Time up / round end               | soft descending tone    | sine, 440→220Hz, 300ms               |
 
 All cues respect a `soundEnabled` setting (default **on**, one tap to mute in
-Settings) and must never play if the tab is backgrounded (use the Page
-Visibility API to suppress, not just to save battery but because a sound
-firing from a backgrounded tab reads as a bug, not a feature).
+Settings) and must never play if the tab is backgrounded, suppressed via the
+Page Visibility API. The point isn't just battery savings: a sound firing
+from a backgrounded tab reads as a bug, not a feature.
 
 ### Background texture
 
 A faint dot grid in light mode; dark mode gets a distinct scanline texture
-rather than a pure lightness inversion of the same pattern — reinforces the
+rather than a pure lightness inversion of the same pattern. Reinforces the
 "precision instrument" framing where it's cheapest to add (`styles.css`,
 under `:root[data-theme='dark']` and the matching `prefers-color-scheme:
 dark` block). The share card reuses the same texture pair so a shared image
@@ -232,14 +232,14 @@ Each is a standalone Angular component, signal `input()`/`output()` only, no
 
 | Component          | Behavior spec                                                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Button`            | Variants: primary (accent fill), secondary (outline), ghost (text-only, used for "return to menu"). Press state scales to 97% over `--duration-instant`. Focus-visible ring uses `--color-accent` at 2px offset — never removed, only restyled.                                                                                                                                                        |
+| `Button`            | Variants: primary (accent fill), secondary (outline), ghost (text-only, used for "return to menu"). Press state scales to 97% over `--duration-instant`. Focus-visible ring uses `--color-accent` at 2px offset, never removed, only restyled.                                                                                                                                                        |
 | `SegmentedControl`  | Used for mode/difficulty/duration/lives/word-pack pickers. Full keyboard support: arrow keys move selection, Enter/Space confirms. Selected segment settles with a spring pop (CSS `transform`, not layout-triggering properties). `variant="card"` + an `optionTemplate` renders taller icon+label choice cards instead of the compact pill; wraps onto multiple rows once five or more options are present rather than overflowing. |
 | `Toggle`            | `role="switch"` button, not a restyled checkbox. Optional `label`/`description` render a full settings-row (text leading, switch trailing); bare (icon-only) usage falls back to `ariaLabel`.                                                                                                                                                                                                           |
 | `StatBadge`         | Label + number (score, WPM, accuracy, streak). Number changes animate via a brief scale-pop (`--ease-spring`) on update, not a re-render flash.                                                                                                                                                                                                                                                          |
-| `TimerRing`         | SVG circular countdown, `stroke-dashoffset` driven by a signal `computed()` from remaining time — no `setInterval` DOM writes. Ring color shifts from `--color-accent` → `--color-warning` at 20% time remaining → `--color-danger` at 10%. Not used in Endless/Survival mode (see below).                                                                                                             |
+| `TimerRing`         | SVG circular countdown, `stroke-dashoffset` driven by a signal `computed()` from remaining time, no `setInterval` DOM writes. Ring color shifts from `--color-accent` → `--color-warning` at 20% time remaining → `--color-danger` at 10%. Not used in Endless/Survival mode (see below).                                                                                                             |
 | `Toast`             | Non-blocking transient message (e.g. "Settings saved", "Copied to clipboard"). `role="status"`, `aria-live="polite"`, auto-dismiss 3s, dismissible early via Escape/click.                                                                                                                                                                                                                              |
-| `Dialog`            | Uses the native `<dialog>` element (`showModal()`) for confirmation/help overlays — free focus-trapping and Escape-to-close from the platform, no custom a11y reimplementation needed. Uses `--shadow-lg` for depth against the backdrop. Used for the Game screen's exit-confirmation flow.                                                                                                           |
-| `NoticeBanner`      | An in-flow, dismissible top bar (not `position: fixed`) — it pushes content down while visible and reclaims the space entirely once dismissed. Used once app-wide, in the app shell, for the first-visit local-storage disclosure.                                                                                                                                                                     |
+| `Dialog`            | Uses the native `<dialog>` element (`showModal()`) for confirmation/help overlays: free focus-trapping and Escape-to-close from the platform, no custom a11y reimplementation needed. Uses `--shadow-lg` for depth against the backdrop. Used for the Game screen's exit-confirmation flow.                                                                                                           |
+| `NoticeBanner`      | An in-flow, dismissible top bar (not `position: fixed`) that pushes content down while visible and reclaims the space entirely once dismissed. Used once app-wide, in the app shell, for the first-visit local-storage disclosure.                                                                                                                                                                     |
 
 ### Icon set
 
@@ -265,7 +265,7 @@ cap, so the set reads as Typester's own rather than a generic default.
   than looping. Purpose: a first-time visitor sees what the mechanic looks
   like before clicking anything.
 - Selecting "Game Modes" reveals mode (Timed/Endless) via `SegmentedControl`,
-  then difficulty, then duration-or-lives, then an optional word pack — all
+  then difficulty, then duration-or-lives, then an optional word pack, all
   inline (no page navigation until the actual round starts), animated with a
   height-auto expand using `--duration-base`/`--ease-standard`.
 - Confirming a mode navigates to `/play/:mode/:difficulty/:duration`
@@ -273,8 +273,7 @@ cap, so the set reads as Typester's own rather than a generic default.
   `/play/quick/mixed/:duration` using the player's configured Quick Play
   duration.
 - **Returning-player teaser row**: once the player has any recorded result,
-  a small chip row surfaces the day streak and a recent best score —
-  everything Typester already computes gets a place to be seen at rest, not
+  a small chip row surfaces the day streak and a recent best score. Everything Typester already computes gets a place to be seen at rest, not
   just once on Results.
 - **Day-streak "at risk" banner**: when the streak is intact but today's
   round hasn't been played yet, an in-flow `NoticeBanner`-style card (not
@@ -284,12 +283,12 @@ cap, so the set reads as Typester's own rather than a generic default.
   rather than silent.
 - **Challenge-link landing state**: when Home loads with a challenge link's
   encoded query params (`mode`, `difficulty`, `duration`, `score`, `wpm`),
-  the standard hero is replaced entirely by a challenge frame — "{score}
+  the standard hero is replaced entirely by a challenge frame: "{score}
   pts ({wpm} WPM) on {mode}/{difficulty}/{duration} — think you can beat
   it?" with a primary "Accept Challenge" action that pre-fills the exact
   config and starts immediately, and a ghost "Play Typester normally" link
   back to the standard Home. This is a landing-state override, not a
-  persistent app mode — it doesn't survive a reload without the query
+  persistent app mode. It doesn't survive a reload without the query
   param.
 
 ### Game
@@ -298,7 +297,7 @@ cap, so the set reads as Typester's own rather than a generic default.
   "lives remaining" dots in the same slot for Endless/Survival (filled dot
   per mistake still available); a word look-ahead strip (see below); the
   answer `<input>` directly beneath it (`--font-mono`, auto-focused, cleared
-  and re-focused after every submit — zero click required for the whole
+  and re-focused after every submit, zero click required for the whole
   round); then a stat row (`StatBadge` × Score, Streak, live WPM).
 - **Word look-ahead strip**: replaces a single centered word with the
   current word (`--text-word`, full opacity) plus the next 1–2 words shown
@@ -307,14 +306,13 @@ cap, so the set reads as Typester's own rather than a generic default.
   animation; under reduced motion the content swaps instantly instead.
 - **Escalating difficulty**: for Timed and Endless rounds (not Quick Play),
   the round's word list is reordered shorter-words-first by splitting
-  around the median word length, so later words in a round trend longer —
-  made visually legible via the spotlight glow behind the word intensifying
+  around the median word length, so later words in a round trend longer, made visually legible via the spotlight glow behind the word intensifying
   as the round progresses, not a numeric "level" counter.
 - On submit: correct → word and input both flash `--color-success` for
   `--duration-instant`, `SoundService` fires the correct (or combo, every
   5th streak) cue, next word appears immediately. A near-miss (typed value
-  exactly one character off) gets its own `--color-warning` treatment — a
-  smaller shake amplitude than a full miss and a pitched-up incorrect tone —
+  exactly one character off) gets its own `--color-warning` treatment: a
+  smaller shake amplitude than a full miss and a pitched-up incorrect tone,
   distinct from, but not more lenient than, a full incorrect: the streak
   still resets either way. A genuinely incorrect submission flashes
   `--color-danger`, and a per-character diff underlines exactly which
@@ -323,16 +321,16 @@ cap, so the set reads as Typester's own rather than a generic default.
   `aria-live="polite"` region so screen-reader users get the same instant
   feedback sighted users get from color/motion.
 - On round end (timeout, mistake limit reached in Endless, or word-list
-  exhaustion): a brief `--duration-slow` transition to the Results screen —
+  exhaustion): a brief `--duration-slow` transition to the Results screen,
   not an abrupt route swap.
 - **Exit flow**: Escape or a corner button opens a `Dialog` exit-confirm;
   the round timer genuinely pauses while it's open. Options are save-and-
   exit (scores as if time ran out), discard, or resume.
 - **Modes**: Quick Play (fixed easy/medium/hard word composition, legacy
   behavior preserved), Timed (full difficulty-tier pool, clock-based),
-  Endless/Survival (no clock — ends after a chosen number of mistakes).
+  Endless/Survival (no clock, ends after a chosen number of mistakes).
 - **Word packs**: an optional themed word source (Movies & TV, Tech/
-  Programming, Science, Everyday), opt-in via Home, Timed/Endless only —
+  Programming, Science, Everyday), opt-in via Home, Timed/Endless only,
   bundled and curated the same way as the base word bank, bypassing the
   live word fetch entirely. Quick Play and the daily challenge always use
   their own fixed sources regardless of a selected pack.
@@ -346,7 +344,7 @@ cap, so the set reads as Typester's own rather than a generic default.
   duration` combination, a "New Best" badge plus a one-shot confetti burst
   marks it.
 - Any achievement unlocked this round renders as a celebratory chip row
-  (accent-tinted fill, not the locked/muted look) beneath the stat grid — an
+  (accent-tinted fill, not the locked/muted look) beneath the stat grid. An
   unlock should read as an unlock at a glance. When nothing unlocks this
   round, the single closest miss is shown instead (e.g. "6 more WPM for the
   50 WPM Club") rather than nothing, so a null result still shows a
@@ -355,11 +353,11 @@ cap, so the set reads as Typester's own rather than a generic default.
   note when a streak freeze covered a gap.
 - Three primary actions: "Play Again" (same config, restarts immediately),
   "Share", and "Menu" (ghost, returns home). A fourth, lower-emphasis ghost
-  action appears only when this round was a new best: "New best — try
+  action appears only when this round was a new best: "New best, try
   {combo}?", suggesting the next not-yet-beaten config in the fixed 10-combo
   set, never one already beaten this session.
 - **Share**: generates a 1200×630 `<canvas>` PNG (see `ShareCardService`)
-  matching the player's current theme — score/WPM headline, mode/difficulty/
+  matching the player's current theme: score/WPM headline, mode/difficulty/
   duration or "Typester Daily #N", a best-streak dot row, background
   texture, small wordmark. Where the platform supports file sharing
   (`navigator.canShare({ files })`), the PNG and share text go out together
@@ -373,7 +371,7 @@ cap, so the set reads as Typester's own rather than a generic default.
 ### Stats (`/stats`)
 
 Reachable via a ghost `Button` on Home (same pattern as Help/Settings), reads
-`StorageService.stats` directly — no separate service. Sectioned with the
+`StorageService.stats` directly, no separate service. Sectioned with the
 same labeled-card treatment established on Settings (`--shadow-sm`,
 `--color-border`, uppercase eyebrow label per section):
 
@@ -387,63 +385,63 @@ same labeled-card treatment established on Settings (`--shadow-sm`,
    Endless/Survival's own 9-combo set (3 difficulties × 3 lives counts).
    Kept out of the 10-combo grid above (and out of Results' next-combo
    cross-promotion, which stays scoped to Quick+Timed) since a lives count
-   isn't comparable to a duration — but still given its own place to be
+   isn't comparable to a duration, but still given its own place to be
    seen at rest, per this doc's design philosophy #4.
-4. **Achievements**: the full achievement set as chips — unlocked ones in
+4. **Achievements**: the full achievement set as chips. Unlocked ones are in
    the celebratory style from Results, locked ones visibly locked (muted
-   fill, dashed border, lock glyph — not just faded, since further opacity
+   fill, dashed border, lock glyph, not just faded, since further opacity
    would drop below WCAG AA contrast) with a count in the section header.
    This is what makes the achievement system function as a retention
    mechanic instead of a one-shot Results toast.
 
 ## Gamification
 
-Layered on top of the base scoring in `game-engine.ts` — additive, not a
+Layered on top of the base scoring in `game-engine.ts`: additive, not a
 replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
 
 - **Streak combo multiplier**: every 5 consecutive correct words bumps a
   score multiplier (×1, ×1.5, ×2, capped at ×2) applied to subsequent words
   until a mistake resets the streak to ×1. Mirrors the "combo milestone"
-  sound cue — same trigger, now with a scoring consequence, not just audio.
+  sound cue: same trigger, now with a scoring consequence, not just audio.
 - **Power words**: roughly 1 in 8 words drawn during a round is flagged as a
-  power word — visually marked with a subtle glow/`--color-energy` underline
-  on the word display — worth double its tier's base points if typed
+  power word: visually marked with a subtle glow/`--color-energy` underline
+  on the word display, worth double its tier's base points if typed
   correctly. Selection is random per round, not predictable.
 - **Near-miss feedback**: a submission exactly one character off from the
   target is distinguished visually and audibly from a full miss, but is not
-  scored any differently — the streak resets either way. A feedback
+  scored any differently. The streak resets either way. A feedback
   distinction only, so it can't blur the streak mechanic's loss-aversion
   teeth.
-- **Achievements**: a fixed set — First Round, 30/50/70/90/110 WPM Club,
+- **Achievements**: a fixed set: First Round, 30/50/70/90/110 WPM Club,
   Perfect Accuracy, 10-Streak, 7/30/100-Day Streak, Every Difficulty
-  Beaten — tracked in `Stats` via `StorageService`, evaluated at round end,
+  Beaten. Tracked in `Stats` via `StorageService`, evaluated at round end,
   surfaced as chips on Results the round they're first earned and listed
-  (earned/locked) on the Stats screen. No points value of their own —
+  (earned/locked) on the Stats screen. No points value of their own,
   status only.
 - **Day streak & streak freeze**: consecutive UTC calendar days with at
   least one finished round. One freeze token is earned every time the
-  streak crosses a multiple of 7 and forgives exactly one missed day —
+  streak crosses a multiple of 7 and forgives exactly one missed day. It's
   scarce and earned by design, never unlimited, so it doesn't remove the
   loss aversion the streak mechanic exists to create.
 - **Daily challenge**: a fixed config (Timed, Medium, 60s) seeded
   deterministically from the UTC calendar date, so every player who plays
-  "today" gets byte-identical word order — always drawn from the bundled
+  "today" gets byte-identical word order. It always draws from the bundled
   word bank, never the live per-round fetch, so results are genuinely
   comparable. Recorded into its own `Stats.dailyResults` bucket, never
   conflated with the regular best-scores table.
 - **Challenge links**: a non-daily result's config + score/WPM, packed into
   plain query params so a shared link can render Home's challenge-landing
-  state for whoever opens it. Self-reported and unverifiable (no backend) —
+  state for whoever opens it. Self-reported and unverifiable (no backend),
   never presented in copy as "verified" or a "leaderboard."
 
 ### Settings
 
 - Grouped into labeled sections (Appearance, Sound, Gameplay), each an
   elevated card (`--shadow-sm`, `--color-border`) under a small uppercase
-  eyebrow label — fields read as a designed surface, not a loose stack of
+  eyebrow label. Fields read as a designed surface, not a loose stack of
   form controls.
-- Appearance: Theme (light/dark/system) and Motion (full/reduced/system —
-  mirrors `prefers-reduced-motion` but allows an explicit override) are
+- Appearance: Theme (light/dark/system) and Motion (full/reduced/system,
+  mirroring `prefers-reduced-motion` but allowing an explicit override) are
   `SegmentedControl` `variant="card"` icon+label choices (sun/moon/monitor;
   bolt/pause/monitor), not plain dropdowns or a bare pill row.
 - Sound is a `Toggle` with a label _and_ a one-line description of what it
@@ -455,7 +453,7 @@ replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
 - Every field persists on change (no separate "Save" button); a quiet
   footnote states this explicitly rather than leaving it implicit. Writes
   happen synchronously in the same change handler that updates the local
-  signal, not via an `effect()` — an effect's flush isn't tied to the
+  signal, not via an `effect()`. An effect's flush isn't tied to the
   triggering event, so a click immediately followed by navigation could
   race ahead of it and silently drop the write.
 
@@ -469,12 +467,12 @@ replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
 
 - Single-column, mobile-first. `--text-word` already scales via `clamp()`.
 - On narrow viewports, the Game screen's word look-ahead strip drops to
-  current + next word only (no third slot) — legibility of the current word
+  current + next word only (no third slot). Legibility of the current word
   takes priority over showing three words on a small screen.
 - Container queries (not just viewport media queries) on the Game screen's
   root so the word/input/timer group re-proportions correctly whether it's
   full-width on mobile or centered in a max-width column on desktop.
-- Breakpoints follow Tailwind v4 defaults (`sm`/`md`/`lg`/`xl`) — no custom
+- Breakpoints follow Tailwind v4 defaults (`sm`/`md`/`lg`/`xl`). No custom
   breakpoint scale needed.
 - `SegmentedControl` wraps onto multiple rows rather than overflowing once
   five or more options are present (e.g. the word-pack picker).
@@ -488,11 +486,11 @@ replacement for the legacy point values (easy/medium/hard = 1/2/3 pts/word):
 - [ ] Score, streak, live-WPM, and timer-critical state changes exposed via
       `aria-live="polite"` (or `assertive` only for round-end).
 - [ ] Color is never the only signal (correct/near-miss/incorrect also
-      differ in icon/shake-amplitude/motion, not just hue) — relevant for
+      differ in icon/shake-amplitude/motion, not just hue), relevant for
       the ~8% of users with color vision deficiency.
 - [ ] `prefers-reduced-motion: reduce` collapses all durations to `0ms` (see
       §Motion), and freezes/instant-swaps the Home auto-typing preview and
-      the Game word look-ahead strip specifically — verified, not assumed.
+      the Game word look-ahead strip specifically, verified, not assumed.
 - [ ] Both themes pass 4.5:1 text contrast (§Color), including locked
       achievement chips (muted token, not opacity-faded).
 - [ ] Zero serious/critical `axe-core` violations on every screen, both

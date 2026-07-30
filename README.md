@@ -4,7 +4,7 @@
 [![Live Demo](https://img.shields.io/badge/demo-typester.ashwinsathian.com-2ea44f)](https://typester.ashwinsathian.com)
 
 A keyboard-first typing speed game. A word appears, you type it, you race the
-clock — chase a streak multiplier, catch power words for bonus points, and
+clock. Chase a streak multiplier, catch power words for bonus points, and
 beat your best score.
 
 - **Quick Play, Timed, and Endless/Survival modes**, plus a **Typester
@@ -15,8 +15,8 @@ beat your best score.
   scoring, plus a fixed **achievement set** and a **Stats screen** tracking
   day streak, best scores across all mode/difficulty/duration combos, and
   unlocked achievements.
-- **Shareable results** — a themed, client-side-rendered image card, or a
-  text/clipboard fallback — and **challenge links** that let a friend land
+- **Shareable results**: a themed, client-side-rendered image card, or a
+  text/clipboard fallback, plus **challenge links** that let a friend land
   on a "beat this score?" screen.
 - **Optional themed word packs** (Movies & TV, Tech/Programming, Science,
   Everyday) for Timed/Endless rounds, alongside the default live word
@@ -61,7 +61,7 @@ ESLint on staged files automatically.
 npm run build
 ```
 
-Produces a fully static, prerendered site in `dist/typester/browser` — no
+Produces a fully static, prerendered site in `dist/typester/browser`: no
 Node server required at runtime (see ARCHITECTURE.md §D2 for why).
 
 ## Deployment
@@ -69,7 +69,7 @@ Node server required at runtime (see ARCHITECTURE.md §D2 for why).
 Cloudflare Workers (static assets), Git-connected to this repo via Workers
 Builds. Every push to `main` triggers a build
 (`npm run build -- --configuration production`) and deploy
-(`npx wrangler deploy`) — no GitHub Actions, no local infrastructure. The
+(`npx wrangler deploy`). No GitHub Actions, no local infrastructure. The
 build output (`dist/typester/browser`) is served directly as static assets,
 with `wrangler.jsonc`'s `not_found_handling: "single-page-application"`
 covering client-side route fallback. Custom domain:
@@ -80,9 +80,9 @@ covering client-side route fallback. Custom domain:
 ```
 src/app/
   core/       singleton services, functional guards, shared models
-  features/   home, game, results, stats, settings, help, legal — one folder per route
-  shared/     ui/  — presentational design-system primitives
-              data/ — bundled word bank + themed word packs (offline fallback)
+  features/   home, game, results, stats, settings, help, legal: one folder per route
+  shared/     ui/: presentational design-system primitives
+              data/: bundled word bank + themed word packs (offline fallback)
 e2e/          Playwright specs (flows + axe accessibility)
 ```
 
