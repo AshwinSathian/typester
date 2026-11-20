@@ -1,39 +1,36 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-import { gotoReady } from './helpers';
+import { gotoReady, typeWords } from './helpers';
 
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+const pages = ['/', '/?mode=rush&vs=900', '/play/rush', '/stats', '/settings', '/privacy'];
 
-const routes = [
-  '/',
-  '/help',
-  '/settings',
-  '/privacy',
-  '/terms',
-  '/license',
-  '/stats',
-  `/play/daily/${todayUtc()}`,
-  '/?mode=timed&difficulty=hard&duration=60&score=412&wpm=88',
-];
-const themes: readonly ('light' | 'dark')[] = ['light', 'dark'];
-
-for (const theme of themes) {
-  test.describe(`axe accessibility (${theme} theme)`, () => {
+for (const theme of ['light', 'dark'] as const) {
+  test.describe(`${theme} theme`, () => {
     test.use({ colorScheme: theme });
 
-    for (const route of routes) {
-      test(`${route} has no serious/critical violations`, async ({ page }) => {
-        await gotoReady(page, route);
-        const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
-
-        const seriousOrWorse = results.violations.filter(
-          (v) => v.impact === 'serious' || v.impact === 'critical',
-        );
-        expect(seriousOrWorse, JSON.stringify(seriousOrWorse, null, 2)).toEqual([]);
+    for (const path of pages) {
+      test(`${path} has no serious axe violations`, async ({ page }) => {
+        await gotoReady(page, path);
+        const { violations } = await new AxeBuilder({ page }).analyze();
+        const serious = violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? ''));
+        expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
       });
     }
+
+    test('results and a filled stats page have no serious axe violations', async ({ page }) => {
+      await gotoReady(page, '/play/sprint');
+      await typeWords(page, 3);
+      await page.keyboard.press('x');
+      await page.keyboard.press('Escape');
+      await expect(page.getByText('New best')).toBeVisible();
+      for (const check of [null, '/stats']) {
+        if (check) await gotoReady(page, check);
+        await page.waitForTimeout(500);
+        const { violations } = await new AxeBuilder({ page }).analyze();
+        const serious = violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? ''));
+        expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+      }
+    });
   });
 }

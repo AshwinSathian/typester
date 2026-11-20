@@ -1,44 +1,48 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
-import { ACHIEVEMENTS, AchievementDef, AchievementId } from '../../core/models/achievement';
-import { ComboDescriptor, allEndlessCombos, allGameCombos } from '../../core/models/game-config';
-import { BestScoreEntry } from '../../core/models/stats';
-import { StorageService } from '../../core/services/storage.service';
-import { Button } from '../../shared/ui/button/button';
-import { StatBadge } from '../../shared/ui/stat-badge/stat-badge';
+import { ModeId } from '../../core/engine';
+import { MODES } from '../../core/modes';
+import { Store, liveStreak } from '../../core/store';
+import { utcDate, weakKeys } from '../../core/words';
+import { KeyMap } from '../../ui/key-map';
+import { PageHeader } from '../../ui/page-header';
+
+const BEST_MODES: readonly ModeId[] = ['rush', 'sprint', 'drill'];
 
 @Component({
   selector: 'app-stats',
-  imports: [Button, StatBadge],
+  imports: [DecimalPipe, RouterLink, KeyMap, PageHeader],
   templateUrl: './stats.html',
   styleUrl: './stats.css',
 })
 export class Stats {
-  private readonly router = inject(Router);
-  private readonly storage = inject(StorageService);
+  private readonly store = inject(Store);
+  private readonly today = utcDate(new Date());
 
-  protected readonly stats = this.storage.stats;
-  protected readonly combos: readonly ComboDescriptor[] = allGameCombos();
-  protected readonly endlessCombos: readonly ComboDescriptor[] = allEndlessCombos();
-  protected readonly achievements: readonly AchievementDef[] = ACHIEVEMENTS;
+  protected readonly data = this.store.data;
+  protected readonly streak = computed(() => liveStreak(this.data().streak, this.today));
+  protected readonly minutes = computed(() => Math.round(this.data().totals.ms / 60_000));
+  protected readonly weak = computed(() => weakKeys(this.data().keys, 5));
+  protected readonly hasKeys = computed(() => Object.keys(this.data().keys).length > 0);
 
-  protected readonly unlockedIds = computed(() => new Set(this.stats().achievementsUnlocked));
+  protected readonly bests = computed(() =>
+    BEST_MODES.map((id) => ({ mode: MODES[id], best: this.data().best[id] ?? null })),
+  );
 
-  isUnlocked(id: AchievementId): boolean {
-    return this.unlockedIds().has(id);
-  }
+  /** Recent WPM, oldest first, as bar heights relative to the fastest. */
+  protected readonly recent = computed(() => {
+    const runs = [...this.data().recent].reverse();
+    const top = Math.max(1, ...runs.map((r) => r.wpm));
+    return runs.map((r) => ({ ...r, height: Math.max(4, (r.wpm / top) * 100) }));
+  });
 
-  bestScoreFor(combo: ComboDescriptor): BestScoreEntry | null {
-    return this.stats().bestScores[combo.key] ?? null;
-  }
-
-  playCombo(combo: ComboDescriptor): void {
-    const { config } = combo;
-    this.router.navigate(['/play', config.mode, config.difficulty, config.durationSeconds]);
-  }
-
-  goToMenu(): void {
-    void this.router.navigate(['/']);
-  }
+  protected readonly recentLabel = computed(() => {
+    const runs = this.data().recent;
+    if (runs.length === 0) return '';
+    const avg = Math.round(runs.reduce((a, r) => a + r.wpm, 0) / runs.length);
+    const top = Math.max(...runs.map((r) => r.wpm));
+    return `Last ${runs.length} runs: average ${avg} WPM, fastest ${top} WPM.`;
+  });
 }

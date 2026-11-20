@@ -1,0 +1,81 @@
+<section class="results" aria-labelledby="results-heading">
+  <header class="results__head">
+    <h1 id="results-heading" class="results__title" tabindex="-1" #heading>
+      {{ title() }} <span class="sr-only">score:</span>
+      <span class="results__score">{{ run().score | number }}</span>
+    </h1>
+    @if (recorded()?.isBest && run().words > 0) {
+      <span class="key key--gold results__badge">New best</span>
+    }
+    <p class="results__verdict">{{ verdict() }}</p>
+    @if (targetLine()) {
+      <p class="results__verdict">{{ targetLine() }}</p>
+    }
+  </header>
+
+  <dl class="results__stats">
+    <div>
+      <dt>WPM</dt>
+      <dd>{{ run().wpm }}</dd>
+    </div>
+    <div>
+      <dt>Accuracy</dt>
+      <dd>{{ run().accuracy }}%</dd>
+    </div>
+    <div>
+      <dt>Level</dt>
+      <dd>{{ run().level }}</dd>
+    </div>
+    <div>
+      <dt>Longest combo</dt>
+      <dd>{{ run().bestCombo }}</dd>
+    </div>
+    @if (mode() === 'daily') {
+      <div>
+        <dt>Day streak</dt>
+        <dd>{{ streak() }}</dd>
+      </div>
+    }
+  </dl>
+
+  <div class="results__actions">
+    <button type="button" class="key key--accent results__cta" (click)="again.emit()">
+      Play again <kbd>Enter</kbd>
+    </button>
+    <button
+      type="button"
+      class="key results__cta"
+      [disabled]="sharing() || run().words === 0"
+      (click)="share()"
+    >
+      Share
+    </button>
+    <a class="link-button" routerLink="/">Menu <kbd>Esc</kbd></a>
+  </div>
+  <p class="results__status" role="status">{{ shareStatus() }}</p>
+
+  @if (run().words > 1) {
+    <div class="results__panels">
+      <figure class="panel">
+        <figcaption class="panel__title">
+          {{ ghost()?.length ? 'Words over time, against your previous best' : 'Words over time' }}
+        </figcaption>
+        <app-race-chart [you]="run().wordTimes" [ghost]="ghost()" [durationMs]="run().durationMs" />
+      </figure>
+
+      <figure class="panel">
+        <figcaption class="panel__title">
+          @if (missCount() === 0) {
+            No missed keys. A clean run.
+          } @else {
+            {{ missCount() }} missed {{ missCount() === 1 ? 'key' : 'keys' }}, by letter
+          }
+        </figcaption>
+        <app-key-map [tally]="tally()" />
+        @if (missCount() > 2 && mode() !== 'drill') {
+          <a class="panel__link" routerLink="/play/drill">Drill the keys you miss</a>
+        }
+      </figure>
+    </div>
+  }
+</section>

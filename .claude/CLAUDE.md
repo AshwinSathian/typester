@@ -58,39 +58,29 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 ## Project-specific conventions (Typester)
 
 Read [ARCHITECTURE.md](../ARCHITECTURE.md) and [DESIGN-typester.md](../DESIGN-typester.md)
-before implementing any feature: they contain the key architectural
-decisions and the full design-token/component spec this project holds
-itself to. In particular:
+before changing a feature. In particular:
 
-- **No NgRx / no external state library.** All state is plain signal-based
-  services under `core/services`. Do not introduce `@ngrx/*`, rejected for
-  this project's scope (see ARCHITECTURE.md §D1).
-- **Game config lives in the route**, not in a shared mutable service. The
-  route is `/play/:mode/:difficulty/:duration`; a functional guard in
-  `core/guards` validates it. Never reintroduce a boolean-flag service
-  (`accessGame`-style) to gate navigation: this was the legacy app's core
-  defect (ARCHITECTURE.md §Background, defect #2).
-- **`core/services/game-engine.ts` must have zero Angular imports.** It is
-  pure TypeScript, unit-tested with plain Vitest (no `TestBed`). Angular
-  components/services wrap it reactively via signals. They do not
-  reimplement its logic.
-- **No DOM manipulation for the timer or any other reactive value.** The
-  legacy app's `timer.component.ts` used `getElementById`/`setInterval`
-  directly. Replaced by `TimerRing`, driven entirely by a `computed()`
-  signal (ARCHITECTURE.md §D4, DESIGN §Shared UI primitives).
-- **No third-party UI kit** (no Angular Material, PrimeNG, Bootstrap).
-  Styling is Tailwind CSS v4 utility classes plus the CSS custom-property
-  design tokens defined in `DESIGN-typester.md` §Tokens: every color/
-  spacing/motion value must trace back to a token, never a hardcoded literal.
-- **Words: live Datamuse API fetch per round, bundled fallback.**
-  `word-source.service.ts` fetches candidate words from Datamuse at the
-  start of every round and falls back to the bundled
-  `shared/data/word-bank.ts` on timeout/failure: this is what keeps the
-  PWA playable offline (see ARCHITECTURE.md §D5). Sound stays synthesized
-  via Web Audio API (`core/services/sound.service.ts`, §D7) with no shipped
-  audio assets. Do not add a runtime fetch for audio.
-- **Persistence is `localStorage` via `core/services/storage.service.ts`**,
-  versioned and falling back to defaults on corrupted data, not IndexedDB
-  (ARCHITECTURE.md §D8).
-- Before adding any new runtime npm dependency, confirm it doesn't assume
-  `zone.js` is present: this app is zoneless.
+- **No NgRx or other state library.** State is signals: `core/store.ts` for
+  anything persisted, component signals for the rest.
+- **Game rules live only in `core/engine.ts` and `core/words.ts`**, which
+  have zero Angular imports and are tested with plain Vitest. Time is passed
+  in (`press(char, now)`, `tick(now)`); never put timers or `Date.now()`
+  inside them. Components render `Run.view()` and add sound and effects;
+  they never re-implement scoring, clocks or word choice.
+- **Mode lives in the route** (`/play/:mode`, checked by `modeGuard`). Never
+  gate navigation with a mutable flag service.
+- **No DOM writes for reactive values.** Clocks, bars and keycaps render from
+  signals. The confetti canvas in `ui/burst.ts` is the one imperative
+  drawing surface.
+- **Words are bundled** (`shared/data/words.ts`); the app makes no runtime
+  network requests. The Daily must stay deterministic: seeded RNG over the
+  bundled list, supply called in index order.
+- **Sound is synthesized** with Web Audio (`core/sound.ts`); ship no audio files.
+- **Persistence is one versioned localStorage entry** via `Store`, falling back
+  to defaults on unreadable data. Bump `version` and migrate if the shape changes.
+- **No third-party UI kit.** Tailwind plus the tokens in `src/styles.css`;
+  every colour, size and duration traces to a token. Interactive keycaps use
+  `.key`.
+- **Every transition uses a `--d-*` duration token** so reduced motion works
+  without per-component code.
+- Before adding a runtime npm dependency, confirm it works without `zone.js`.

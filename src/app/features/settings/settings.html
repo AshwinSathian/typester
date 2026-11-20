@@ -1,138 +1,69 @@
-<main id="main-content" class="settings">
-  <h1 class="settings__title">Settings</h1>
+<main id="main-content" class="page">
+  <app-page-header title="Settings" />
 
-  <section class="settings__section">
-    <h2 class="settings__section-label">Appearance</h2>
-    <div class="settings__card">
-      <div class="settings__card-row">
-        <span class="settings__row-label" id="theme-label">Theme</span>
-        <app-segmented-control
-          variant="card"
-          [optionTemplate]="themeIcon"
-          [options]="themeOptions"
-          [value]="theme()"
-          (valueChange)="onThemeChange($event)"
-          ariaLabel="Theme"
-        />
-      </div>
-      <div class="settings__card-row settings__card-row--divider">
-        <span class="settings__row-label" id="motion-label">Motion</span>
-        <app-segmented-control
-          variant="card"
-          [optionTemplate]="motionIcon"
-          [options]="motionOptions"
-          [value]="motion()"
-          (valueChange)="onMotionChange($event)"
-          ariaLabel="Motion"
-        />
-      </div>
-    </div>
-  </section>
-
-  <section class="settings__section">
-    <h2 class="settings__section-label">Sound</h2>
-    <div class="settings__card">
-      <div class="settings__card-row">
-        <app-toggle
-          [checked]="soundEnabled()"
-          (checkedChange)="onSoundChange($event)"
-          label="Sound effects"
-          description="Play a cue for correct and incorrect answers"
-        />
-      </div>
-    </div>
-  </section>
-
-  <section class="settings__section">
-    <h2 class="settings__section-label">Gameplay</h2>
-    <div class="settings__card">
-      <div class="settings__card-row">
-        <label class="settings__row-label" for="quick-duration">Quick Play duration</label>
-        <div class="settings__duration-field">
+  <fieldset class="group">
+    <legend>Theme</legend>
+    <div class="choices">
+      @for (c of themes; track c.value) {
+        <label class="choice">
           <input
-            id="quick-duration"
-            type="number"
-            [formField]="settingsForm.quickPlayDurationSeconds"
-            (change)="onQuickPlayDurationChange($event)"
+            type="radio"
+            name="theme"
+            [value]="c.value"
+            [checked]="settings().theme === c.value"
+            (change)="set('theme', c.value)"
           />
-          <span class="settings__duration-unit">seconds</span>
-        </div>
-        @if (settingsForm.quickPlayDurationSeconds().invalid()) {
-          <p class="settings__error" role="alert">
-            Please enter a duration between 15 and 300 seconds.
-          </p>
-        }
-      </div>
+          <span class="key choice__cap">{{ c.label }}</span>
+        </label>
+      }
     </div>
-  </section>
+  </fieldset>
 
-  <p class="settings__footnote">Every change here saves automatically - there's no Save button.</p>
+  <fieldset class="group" aria-describedby="motion-hint">
+    <legend>Motion</legend>
+    <p class="group__hint" id="motion-hint">
+      Reduced turns off the shake, the confetti and the floating points.
+    </p>
+    <div class="choices">
+      @for (c of motions; track c.value) {
+        <label class="choice">
+          <input
+            type="radio"
+            name="motion"
+            [value]="c.value"
+            [checked]="settings().motion === c.value"
+            (change)="set('motion', c.value)"
+          />
+          <span class="key choice__cap">{{ c.label }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
 
-  <app-button variant="ghost" [fullWidth]="true" (pressed)="goToMenu()">Back to Menu</app-button>
+  <div class="group">
+    <label class="toggle">
+      <input
+        type="checkbox"
+        role="switch"
+        [checked]="settings().sound"
+        (change)="set('sound', $any($event.target).checked)"
+      />
+      <span class="toggle__text">
+        <span class="toggle__label">Sound</span>
+        <span class="group__hint">Every correct letter plays the next note of a tune.</span>
+      </span>
+      <span class="toggle__track" aria-hidden="true"></span>
+    </label>
+  </div>
+
+  <div class="group">
+    <h2 class="group__title">Your data</h2>
+    <p class="group__hint">
+      Scores and settings live in this browser only. Clearing scores keeps your settings.
+    </p>
+    <button type="button" class="key reset" (click)="reset()">
+      {{ confirmingReset() ? 'Press again to clear every score' : 'Clear scores' }}
+    </button>
+    <p role="status" class="group__hint">{{ resetDone() ? 'Scores cleared.' : '' }}</p>
+  </div>
 </main>
-
-<ng-template #themeIcon let-opt>
-  <svg
-    class="settings__option-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    @switch (opt.value) {
-      @case ('light') {
-        <circle cx="12" cy="12" r="4" />
-        <path
-          d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-        />
-        <!-- cursor-cap accent: a short flat tick capping the top ray, instead
-             of a rounded tip on every ray -->
-        <rect x="11" y="0.6" width="2" height="1.8" fill="currentColor" stroke="none" />
-      }
-      @case ('dark') {
-        <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" />
-        <rect x="18" y="4" width="2" height="2.4" fill="currentColor" stroke="none" />
-      }
-      @default {
-        <rect x="3" y="4" width="18" height="12" rx="2" />
-        <path d="M8 20h8M12 16v4" />
-        <rect x="5" y="6.8" width="1.8" height="3" fill="currentColor" stroke="none" />
-      }
-    }
-  </svg>
-  <span>{{ opt.label }}</span>
-</ng-template>
-
-<ng-template #motionIcon let-opt>
-  <svg
-    class="settings__option-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    @switch (opt.value) {
-      @case ('full') {
-        <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
-        <rect x="12.2" y="0.6" width="1.8" height="2.4" fill="currentColor" stroke="none" />
-      }
-      @case ('reduced') {
-        <circle cx="12" cy="12" r="9" />
-        <path d="M8 12h8" />
-        <rect x="15.4" y="10.8" width="2.2" height="2.4" fill="currentColor" stroke="none" />
-      }
-      @default {
-        <rect x="3" y="4" width="18" height="12" rx="2" />
-        <path d="M8 20h8M12 16v4" />
-        <rect x="5" y="6.8" width="1.8" height="3" fill="currentColor" stroke="none" />
-      }
-    }
-  </svg>
-  <span>{{ opt.label }}</span>
-</ng-template>

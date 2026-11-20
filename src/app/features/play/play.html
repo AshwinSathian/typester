@@ -1,0 +1,128 @@
+<main id="main-content" class="play">
+  <app-burst />
+
+  @if (summary(); as run) {
+    <app-results
+      [mode]="mode()"
+      [title]="title()"
+      [run]="run"
+      [recorded]="recorded()"
+      [ghost]="ghost()"
+      [target]="target()"
+      (again)="start()"
+    />
+  } @else if (view(); as v) {
+    <header class="hud">
+      <button type="button" class="link-button hud__end" (click)="end()">End <kbd>Esc</kbd></button>
+      <h1 class="hud__title">{{ title() }}</h1>
+      <p class="hud__clock" [class.hud__clock--low]="lowTime()">
+        <span class="sr-only">Time left: </span>{{ seconds() }}<small>s</small>
+      </p>
+    </header>
+    <div class="clockbar" aria-hidden="true">
+      <div class="clockbar__fill" [style.transform]="'scaleX(' + clockFill() + ')'"></div>
+    </div>
+
+    <section class="stage" aria-label="Current word" (pointerdown)="focus()">
+      <input
+        #field
+        id="field"
+        class="stage__field"
+        type="text"
+        autocomplete="off"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        enterkeyhint="next"
+        [attr.aria-label]="'Type the word: ' + v.queue[0].text"
+        (input)="onInput($event)"
+        (focus)="onFocusChange(true)"
+        (blur)="onFocusChange(false)"
+      />
+
+      <div class="stage__word" #word>
+        <app-keycap-word
+          [text]="v.queue[0].text"
+          [typed]="v.typed"
+          [gold]="v.queue[0].gold"
+          [misses]="misses()"
+        />
+        @for (p of popups(); track p.id) {
+          <span class="popup" [class.popup--gold]="p.gold" aria-hidden="true">{{ p.text }}</span>
+        }
+      </div>
+
+      <p class="stage__next" aria-hidden="true">
+        @for (w of v.queue.slice(1); track $index) {
+          <span [class.stage__next--gold]="w.gold">{{ w.text }}</span>
+        }
+      </p>
+
+      <p class="stage__hint">
+        @switch (v.status) {
+          @case ('ready') {
+            @if (focused()) {
+              The clock starts on your first key.
+            } @else {
+              Tap here, then type.
+            }
+          }
+          @case ('paused') {
+            Paused. Type to carry on.
+          }
+          @default {
+            @if (!focused()) {
+              Tap here to keep typing.
+            } @else if (v.queue[0].gold) {
+              Gold word: double points.
+            }
+          }
+        }
+      </p>
+    </section>
+
+    <footer class="meter">
+      <div class="meter__score">
+        <span class="meter__label">Score</span>
+        <span class="meter__big">{{ v.score | number }}</span>
+      </div>
+
+      <div class="meter__mult" [class.meter__mult--hot]="v.multiplier > 1">
+        <span class="key meter__mult-cap" [class.key--gold]="v.multiplier > 1">
+          <span class="sr-only">Multiplier </span>×{{ v.multiplier }}
+        </span>
+        <span class="meter__combo" aria-hidden="true">
+          <span class="meter__combo-fill" [style.transform]="'scaleX(' + comboFill() + ')'"></span>
+        </span>
+      </div>
+
+      <dl class="meter__stats">
+        <div>
+          <dt>Level</dt>
+          <dd>{{ v.level }}</dd>
+        </div>
+        <div>
+          <dt>WPM</dt>
+          <dd>{{ v.wpm }}</dd>
+        </div>
+        @let d = ghostDelta();
+        @if (d !== null) {
+          <div>
+            <dt>Your best</dt>
+            <dd [class.ahead]="d > 0" [class.behind]="d < 0">
+              {{ d > 0 ? '+' + d : d }} {{ d === 1 || d === -1 ? 'word' : 'words' }}
+            </dd>
+          </div>
+        }
+        @if (target(); as t) {
+          <div>
+            <dt>To beat</dt>
+            <dd [class.ahead]="v.score > t">{{ t | number }}</dd>
+          </div>
+        }
+      </dl>
+    </footer>
+
+    <p class="sr-only" aria-live="polite">{{ announcement() }}</p>
+  }
+</main>

@@ -1,0 +1,266 @@
+:host {
+  --heat: 0;
+  display: block;
+  min-height: 100dvh;
+  /* The case warms towards marigold as the multiplier climbs. */
+  background: radial-gradient(
+    120% 70% at 50% 45%,
+    color-mix(in oklab, var(--gold) calc(var(--heat) * 34%), var(--bg)),
+    var(--bg) 70%
+  );
+  transition: background var(--d-slow) var(--ease);
+}
+
+.play {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  max-width: 64rem;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4) var(--space-6);
+  container-type: inline-size;
+}
+
+/* ---- HUD ---- */
+.hud {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+}
+.hud__end {
+  justify-self: start;
+}
+.hud__title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.hud__clock {
+  justify-self: end;
+  margin: 0;
+  font-variation-settings: var(--casual);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  line-height: 1;
+}
+.hud__clock small {
+  font-size: 0.45em;
+  color: var(--ink-soft);
+  margin-left: 0.1em;
+}
+.hud__clock--low {
+  color: var(--miss);
+}
+
+.clockbar {
+  height: 0.5rem;
+  margin-top: var(--space-3);
+  border-radius: 99px;
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+.clockbar__fill {
+  height: 100%;
+  background: var(--accent-fill);
+  transform-origin: left;
+}
+:host:has(.hud__clock--low) .clockbar__fill {
+  background: var(--miss);
+}
+
+/* ---- Stage ---- */
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-8) 0;
+  cursor: text;
+}
+
+/* The real input covers the stage, invisible, so a tap anywhere opens the
+   on-screen keyboard. 16px stops iOS zooming in on focus. */
+.stage__field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  font-size: 16px;
+  caret-color: transparent;
+  cursor: text;
+}
+
+.stage__word {
+  position: relative;
+  width: 100%;
+  pointer-events: none;
+}
+
+.stage__next {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 var(--space-6);
+  min-height: 2em;
+  margin: 0;
+  font-variation-settings: var(--casual);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+.stage__next span:nth-child(3) {
+  opacity: 0.6;
+}
+.stage__next .stage__next--gold {
+  color: var(--gold-side);
+  text-decoration: underline 3px var(--gold);
+  text-underline-offset: 0.2em;
+}
+@container (width < 30rem) {
+  .stage__next span:nth-child(3) {
+    display: none;
+  }
+}
+
+.stage__hint {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+/* Points float up off the word. */
+.popup {
+  position: absolute;
+  left: 50%;
+  top: -0.5rem;
+  translate: -50% 0;
+  font-variation-settings: var(--casual);
+  font-weight: 900;
+  font-size: var(--text-lg);
+  color: var(--accent);
+  white-space: pre;
+  /* Under reduced motion the duration is 0, so the popup never shows. */
+  animation: float-up calc(var(--d-slow) * 1.6) var(--ease) forwards;
+}
+.popup--gold {
+  color: var(--gold-side);
+  font-size: var(--text-xl);
+}
+@keyframes float-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-3rem);
+  }
+}
+/* ---- Meter ---- */
+.meter {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: end;
+  gap: var(--space-6);
+}
+.meter__label,
+.meter__stats dt {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.meter__big {
+  font-variation-settings: var(--casual);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.meter__mult {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+}
+.meter__mult-cap {
+  min-width: 4.25rem;
+  height: 3.25rem;
+  font-size: var(--text-xl);
+  font-weight: 900;
+  cursor: default;
+}
+.meter__mult--hot .meter__mult-cap {
+  animation: pop var(--d-base) var(--ease-spring);
+}
+@keyframes pop {
+  50% {
+    transform: scale(1.12);
+  }
+}
+.meter__combo {
+  width: 100%;
+  height: 0.35rem;
+  border-radius: 99px;
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+.meter__combo-fill {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transform-origin: left;
+  transition: transform var(--d-fast) var(--ease);
+}
+
+.meter__stats {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+}
+.meter__stats dd {
+  margin: 0;
+  font-variation-settings: var(--casual);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1.1;
+}
+.meter__stats .ahead {
+  color: var(--accent);
+}
+.meter__stats .behind {
+  color: var(--miss);
+}
+
+/* Phones: the on-screen keyboard covers the bottom half, so the word and
+   the meter stack at the top instead of spreading over the full height. */
+@media (width < 40rem) {
+  .play {
+    grid-template-rows: auto auto auto auto;
+    align-content: start;
+    gap: var(--space-2);
+  }
+  .stage {
+    padding: var(--space-6) 0 var(--space-2);
+    gap: var(--space-4);
+  }
+}
+
+@container (width < 36rem) {
+  .meter {
+    grid-template-columns: 1fr auto;
+  }
+  .meter__stats {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+}

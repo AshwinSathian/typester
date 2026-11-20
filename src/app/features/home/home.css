@@ -1,228 +1,196 @@
-.home {
+:host {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   min-height: 100dvh;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+/* ---- Bar ---- */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bar__brand {
+  font-variation-settings: var(--casual);
+  font-size: var(--text-lg);
+  font-weight: 900;
+  color: var(--ink);
+  text-decoration: none;
+}
+.bar__nav {
+  display: flex;
+  gap: var(--space-6);
+}
+.bar__nav a,
+.foot a {
+  color: var(--ink-soft);
+  font-weight: 600;
+  text-decoration: none;
+}
+.bar__nav a:hover,
+.foot a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* ---- Hero ---- */
+.home {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
   gap: var(--space-12);
-  padding: var(--space-8) var(--space-4);
+  padding-block: var(--space-12);
+  container-type: inline-size;
 }
 
-.home__hero {
+.hero {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
 }
-
-.home__title {
-  display: inline-flex;
-  align-items: baseline;
-  font-family: var(--font-mono);
-  font-size: var(--text-2xl);
-  font-weight: 700;
+.hero__word {
+  width: 100%;
+  --keycap: clamp(2.4rem, 10cqi, 5.25rem);
+}
+.hero__challenge {
+  max-width: 34ch;
   margin: 0;
-  letter-spacing: -0.02em;
-}
-
-/* The signature element: a terminal-style caret that ties the whole app's
-   identity back to "typing", echoed in the game screen's loading state. */
-.home__caret {
-  display: inline-block;
-  width: 0.5em;
-  height: 0.8em;
-  margin-left: 0.1em;
-  background: var(--color-accent);
-  animation: home-caret-blink 1.1s steps(1, jump-none) infinite;
-}
-
-@keyframes home-caret-blink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home__caret {
-    animation: none;
-  }
-}
-:root[data-motion='reduced'] .home__caret {
-  animation: none;
-}
-
-/* Auto-typing hero preview - a first-time visitor sees what the mechanic
-   looks like before clicking anything. Purely decorative (aria-hidden); the
-   static sr-only paragraph right after it carries the same meaning for
-   screen readers. */
-.home__preview {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  height: 1.5em;
-  margin: 0;
-  font-family: var(--font-mono);
   font-size: var(--text-lg);
-  color: var(--color-text-muted);
+}
+.hero__hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-lg);
+}
+.hero__hint strong {
+  color: var(--ink);
+}
+.hero__hint--touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .hero__hint--keys {
+    display: none;
+  }
+  .hero__hint--touch {
+    display: inline;
+  }
 }
 
-.home__preview-text {
-  min-width: 1ch;
+/* ---- Modes ---- */
+.modes {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.home__caret--preview {
-  height: 1em;
+.mode {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-panel);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--d-fast) var(--ease);
+}
+.mode:hover,
+.mode:focus-visible {
+  background: var(--bg-deep);
+}
+.mode:hover .mode__shortcut,
+.mode:active .mode__shortcut {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  --key-side: var(--accent-side);
+}
+.mode:active .mode__shortcut {
+  transform: translateY(calc(var(--travel) - 1px));
+  box-shadow: 0 1px 0 var(--key-side);
 }
 
-.home__teaser {
+.mode__shortcut {
+  --travel: 4px;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: 4px;
+  font-size: var(--text-lg);
+}
+
+.mode__text {
+  display: grid;
+}
+.mode__name {
+  font-variation-settings: var(--casual);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1.2;
+}
+.mode__blurb {
+  color: var(--ink-soft);
+}
+
+.mode__note {
+  display: flex;
+  gap: var(--space-1);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
+.mode__weak {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4rem;
+  background: var(--miss-key);
+  color: var(--ink);
+  font-variation-settings: var(--casual);
+  font-weight: 800;
+}
+
+@container (width < 34rem) {
+  .mode {
+    grid-template-columns: auto 1fr;
+  }
+  .mode__note {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+
+/* ---- Streak ---- */
+.streak {
+  margin: 0;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.streak__days {
+  font-variation-settings: var(--casual);
+  font-size: var(--text-xl);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* ---- Footer ---- */
+.foot {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  animation: home-picker-expand var(--duration-base) var(--ease-standard);
-}
-
-.home__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
-  color: var(--color-text-muted);
+  gap: var(--space-6);
+  padding-block: var(--space-4);
   font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-.home__chip--energy {
-  color: var(--color-energy-strong);
-}
-
-.home__chip-icon {
-  width: 1em;
-  height: 1em;
-}
-
-.home__actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  width: 100%;
-  max-width: 24rem;
-}
-
-.home__picker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  background: var(--color-surface-raised);
-  border-radius: var(--radius-md);
-  animation: home-picker-expand var(--duration-base) var(--ease-standard);
-}
-
-.home__picker-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.home__picker-label {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  font-weight: 600;
-}
-
-@keyframes home-picker-expand {
-  from {
-    opacity: 0;
-    transform: translateY(-0.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Challenge-link landing state - replaces the standard hero entirely when
-   Home is opened via a shared "beat my score" link. A landing-state
-   override, not a persistent app mode. */
-.home__challenge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-8);
-  width: 100%;
-  max-width: 24rem;
-  text-align: center;
-}
-
-.home__challenge-copy {
-  margin: 0;
-  color: var(--color-accent);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-/* Day-streak "at risk" / "freeze will cover" banner - an in-flow card, not
-   a fixed bottom bar. */
-.home__streak-banner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
-  padding: var(--space-4);
-  max-width: 22rem;
-  background: color-mix(in oklch, var(--color-accent) 8%, var(--color-surface));
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-md);
-  animation: home-picker-expand var(--duration-base) var(--ease-standard);
-}
-
-.home__streak-banner p {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--color-text);
-}
-
-.home__daily-cta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  margin-top: var(--space-4);
-  padding: var(--space-3) var(--space-5);
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text);
-  cursor: pointer;
-  font-family: inherit;
-  transition:
-    border-color var(--duration-fast) var(--ease-standard),
-    background-color var(--duration-fast) var(--ease-standard);
-}
-
-.home__daily-cta:hover {
-  border-color: var(--color-accent);
-  background: color-mix(in oklch, var(--color-accent) 6%, var(--color-surface-raised));
-}
-
-.home__daily-label {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-accent);
-}
-
-.home__daily-sub {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
 }

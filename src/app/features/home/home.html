@@ -1,140 +1,66 @@
+<header class="bar">
+  <a class="bar__brand tap" routerLink="/" aria-label="Typester home">typester</a>
+  <nav class="bar__nav" aria-label="Main">
+    <a class="tap" routerLink="/stats">Stats</a>
+    <a class="tap" routerLink="/settings">Settings</a>
+  </nav>
+</header>
+
 <main id="main-content" class="home">
-  @if (challengeLink(); as challenge) {
-    <div class="home__challenge">
-      <p class="home__challenge-copy">{{ challengeLabel() }} — think you can beat it?</p>
-      <div class="home__actions">
-        <app-button variant="primary" [fullWidth]="true" (pressed)="acceptChallenge()">
-          Accept Challenge
-        </app-button>
-        <app-button variant="ghost" [fullWidth]="true" (pressed)="dismissChallenge()">
-          Play Typester normally
-        </app-button>
-      </div>
-    </div>
-  } @else {
-    <div class="home__hero">
-      <h1 class="home__title">Typester<span class="home__caret" aria-hidden="true"></span></h1>
-      <p class="home__preview" aria-hidden="true">
-        <span class="home__preview-text">{{ previewText() }}</span
-        ><span class="home__caret home__caret--preview"></span>
+  <section class="hero" aria-labelledby="hero-heading">
+    @if (challenge(); as c) {
+      <p class="hero__challenge">
+        Someone scored <strong>{{ c.score | number }}</strong> in {{ c.mode.name }} and sent it to
+        you.
       </p>
-      <p class="sr-only">Type fast. Beat the clock. Chase your best score.</p>
-
-      @if (hasPlayed()) {
-        <div class="home__teaser" role="status">
-          @if (stats().dayStreak > 1) {
-            <span class="home__chip home__chip--energy">
-              <svg
-                class="home__chip-icon"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M12 2c1 3-2 4.5-2 7.5a2 2 0 0 0 4 0c1.5 1 2.5 3 2.5 5a6.5 6.5 0 1 1-13 0C3.5 9.5 8 8 12 2Z"
-                />
-              </svg>
-              {{ stats().dayStreak }}-day streak
-            </span>
-          }
-          @if (bestOverall(); as best) {
-            <span class="home__chip">Best {{ best.totalScore }} pts</span>
-          }
-        </div>
-      }
-
-      @if (streakStatus() === 'at-risk' || streakStatus() === 'freeze-will-cover') {
-        <div class="home__streak-banner" role="status">
-          @if (streakStatus() === 'freeze-will-cover') {
-            <p>A streak freeze covered yesterday - play today to keep it going.</p>
-          } @else {
-            <p>Play today to keep your {{ stats().dayStreak }}-day streak.</p>
-          }
-          <app-button variant="secondary" (pressed)="startQuickPlay()">Quick Play</app-button>
-        </div>
-      }
-
-      <button type="button" class="home__daily-cta" (click)="startDailyChallenge()">
-        <span class="home__daily-label">Typester Daily #{{ dailyDayNumber() }}</span>
-        <span class="home__daily-sub">Same words for everyone today →</span>
-      </button>
-    </div>
-
-    <div class="home__actions">
-      <app-button variant="primary" [fullWidth]="true" (pressed)="startQuickPlay()">
-        Quick Play
-      </app-button>
-
-      <app-button
-        variant="secondary"
-        [fullWidth]="true"
-        [attr.aria-expanded]="showModePicker()"
-        aria-controls="mode-picker"
-        (pressed)="toggleModePicker()"
+    }
+    <h1 id="hero-heading" class="sr-only">Typester, a typing game</h1>
+    <app-keycap-word class="hero__word" [text]="hero" [typed]="typed()" [misses]="misses()" />
+    <p class="hero__hint">
+      <span class="hero__hint--keys"
+        >Type <strong>typester</strong> to start {{ challenge() ? 'and take it on' : 'a Rush' }}, or
+        press a number.</span
       >
-        Game Modes
-      </app-button>
+      <span class="hero__hint--touch">Pick a mode to start.</span>
+    </p>
+  </section>
 
-      @if (showModePicker()) {
-        <div class="home__picker" id="mode-picker">
-          <div class="home__picker-group">
-            <span class="home__picker-label" id="mode-label">Mode</span>
-            <app-segmented-control
-              [options]="modeOptions"
-              [(value)]="pickerMode"
-              ariaLabel="Mode"
-            />
-          </div>
+  <ul class="modes" aria-label="Modes">
+    @for (row of rows(); track row.id) {
+      <li>
+        <button type="button" class="mode" (click)="go(row.id)">
+          <span class="key mode__shortcut" aria-hidden="true">{{ row.shortcut }}</span>
+          <span class="mode__text">
+            <span class="mode__name">{{ row.name }}</span>
+            <span class="mode__blurb">{{ row.blurb }}</span>
+          </span>
+          <span class="mode__note">
+            @if (row.weak.length) {
+              <span class="sr-only">Your weakest keys: </span>
+              @for (k of row.weak; track k) {
+                <span class="mode__weak">{{ k }}</span>
+              }
+            } @else {
+              {{ row.note }}
+            }
+          </span>
+        </button>
+      </li>
+    }
+  </ul>
 
-          <div class="home__picker-group">
-            <span class="home__picker-label" id="difficulty-label">Difficulty</span>
-            <app-segmented-control
-              [options]="difficultyOptions"
-              [(value)]="pickerDifficulty"
-              ariaLabel="Difficulty"
-            />
-          </div>
-
-          @if (pickerMode() === 'endless') {
-            <div class="home__picker-group">
-              <span class="home__picker-label" id="lives-label">Lives</span>
-              <app-segmented-control
-                [options]="livesOptions"
-                [(value)]="pickerLives"
-                ariaLabel="Lives"
-              />
-            </div>
-          } @else {
-            <div class="home__picker-group">
-              <span class="home__picker-label" id="duration-label">Duration</span>
-              <app-segmented-control
-                [options]="durationOptions"
-                [(value)]="pickerDuration"
-                ariaLabel="Duration"
-              />
-            </div>
-          }
-
-          <div class="home__picker-group">
-            <span class="home__picker-label" id="pack-label">Word Pack</span>
-            <app-segmented-control
-              [options]="packOptions"
-              [(value)]="pickerPack"
-              ariaLabel="Word Pack"
-            />
-          </div>
-
-          <app-button variant="primary" [fullWidth]="true" (pressed)="startTimedGame()">
-            Start
-          </app-button>
-        </div>
-      }
-
-      <app-button variant="ghost" [fullWidth]="true" (pressed)="goToHelp()">Help</app-button>
-      <app-button variant="ghost" [fullWidth]="true" (pressed)="goToSettings()"
-        >Settings</app-button
-      >
-      <app-button variant="ghost" [fullWidth]="true" (pressed)="goToStats()">Your Stats</app-button>
-    </div>
+  @if (streak() > 0) {
+    <p class="streak">
+      <span class="streak__days">{{ streak() }}</span>
+      {{ streak() === 1 ? 'day' : 'days' }} in a row.
+      {{ playedToday() ? 'See you tomorrow.' : 'Finish a run today to keep it going.' }}
+    </p>
   }
 </main>
+
+<footer class="foot">
+  <a class="tap" routerLink="/privacy">Privacy</a>
+  <a class="tap" routerLink="/terms">Terms</a>
+  <a class="tap" routerLink="/license">License</a>
+  <a class="tap" href="https://github.com/AshwinSathian/typester" rel="noopener">Source</a>
+</footer>

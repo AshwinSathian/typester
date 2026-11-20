@@ -1,12 +1,2 @@
 <a class="skip-link" href="#main-content">Skip to content</a>
-
-<app-notice-banner
-  [visible]="!storage.settings().localStorageNoticeDismissed"
-  (dismiss)="dismissNotice()"
->
-  Typester stores your settings, stats, and best scores locally in this browser only - nothing is
-  sent to a server except a request for fresh words each round.
-  <a routerLink="/privacy">Privacy policy</a>
-</app-notice-banner>
-
 <router-outlet />

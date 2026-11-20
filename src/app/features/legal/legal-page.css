@@ -15,7 +15,7 @@
 }
 
 .legal__updated {
-  color: var(--color-text-muted);
+  color: var(--ink-soft);
   font-size: var(--text-sm);
   margin: 0 0 var(--space-4);
 }
@@ -29,7 +29,7 @@
 .legal p,
 .legal ul {
   margin: 0;
-  color: var(--color-text);
+  color: var(--ink);
 }
 
 .legal ul {
@@ -37,6 +37,6 @@
 }
 
 .legal a {
-  color: var(--color-accent);
+  color: var(--accent);
   text-decoration: underline;
 }

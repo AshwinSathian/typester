@@ -1,89 +1,80 @@
-<main id="main-content" class="stats">
-  <h1 class="stats__title">Your Stats</h1>
+<main id="main-content" class="page">
+  <app-page-header title="Your stats" />
 
-  <section class="stats__section">
-    <h2 class="stats__section-label">Summary</h2>
-    <div class="stats__card stats__card--summary">
-      <app-stat-badge label="Day Streak" [value]="stats().dayStreak" />
-      <app-stat-badge label="Rounds Played" [value]="stats().roundsPlayed" />
-      <app-stat-badge label="Words Typed" [value]="stats().totalWordsTyped" />
-      @if (stats().streakFreezeCount > 0) {
-        <app-stat-badge
-          label="Streak Freezes"
-          [value]="stats().streakFreezeCount"
-          variant="energy"
-        />
-      }
-    </div>
-  </section>
+  @if (data().totals.runs === 0) {
+    <section class="empty">
+      <p>Nothing here yet. Finish a run and your bests, streak and missed keys show up here.</p>
+      <a class="key key--accent empty__cta" routerLink="/play/rush">Start a Rush</a>
+    </section>
+  } @else {
+    <dl class="totals">
+      <div>
+        <dt>Day streak</dt>
+        <dd>{{ streak() }}</dd>
+      </div>
+      <div>
+        <dt>Longest streak</dt>
+        <dd>{{ data().streak.longest }}</dd>
+      </div>
+      <div>
+        <dt>Runs</dt>
+        <dd>{{ data().totals.runs | number }}</dd>
+      </div>
+      <div>
+        <dt>Words</dt>
+        <dd>{{ data().totals.words | number }}</dd>
+      </div>
+      <div>
+        <dt>Minutes typing</dt>
+        <dd>{{ minutes() | number }}</dd>
+      </div>
+    </dl>
 
-  <section class="stats__section">
-    <h2 class="stats__section-label">Best Scores</h2>
-    <div class="stats__card stats__card--best-scores">
-      @for (combo of combos; track combo.key) {
-        <div class="stats__combo-row">
-          <span class="stats__combo-label">{{ combo.label }}</span>
-          @if (bestScoreFor(combo); as best) {
-            <span class="stats__combo-score">{{ best.totalScore }} pts · {{ best.wpm }} WPM</span>
-          } @else {
-            <div class="stats__combo-unplayed">
-              <span class="stats__combo-placeholder">Not yet attempted</span>
-              <app-button variant="ghost" (pressed)="playCombo(combo)">Play</app-button>
-            </div>
+    <section class="block" aria-labelledby="bests">
+      <h2 id="bests">Bests</h2>
+      <ul class="bests">
+        @for (row of bests(); track row.mode.id) {
+          <li class="bests__row">
+            <span class="bests__mode">{{ row.mode.name }}</span>
+            @if (row.best; as b) {
+              <span class="bests__score">{{ b.score | number }}</span>
+              <span class="bests__meta"
+                >{{ b.wpm }} WPM, {{ b.accuracy }}%, level {{ b.level }}</span
+              >
+            } @else {
+              <span class="bests__meta">
+                No run yet. <a [routerLink]="['/play', row.mode.id]">Play {{ row.mode.name }}</a>
+              </span>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+
+    @if (recent().length > 1) {
+      <section class="block" aria-labelledby="recent">
+        <h2 id="recent">Speed, run by run</h2>
+        <div class="bars" role="img" [attr.aria-label]="recentLabel()">
+          @for (r of recent(); track $index) {
+            <span class="bars__bar" [style.height.%]="r.height" [title]="r.wpm + ' WPM'"></span>
           }
         </div>
-      }
-    </div>
-  </section>
+        <p class="block__note" aria-hidden="true">{{ recentLabel() }}</p>
+      </section>
+    }
 
-  <section class="stats__section">
-    <h2 class="stats__section-label">Endless Best Scores</h2>
-    <div class="stats__card stats__card--endless">
-      @for (combo of endlessCombos; track combo.key) {
-        <div class="stats__combo-row">
-          <span class="stats__combo-label">{{ combo.label }}</span>
-          @if (bestScoreFor(combo); as best) {
-            <span class="stats__combo-score">{{ best.totalScore }} pts · {{ best.wpm }} WPM</span>
-          } @else {
-            <div class="stats__combo-unplayed">
-              <span class="stats__combo-placeholder">Not yet attempted</span>
-              <app-button variant="ghost" (pressed)="playCombo(combo)">Play</app-button>
-            </div>
-          }
-        </div>
-      }
-    </div>
-  </section>
-
-  <section class="stats__section">
-    <h2 class="stats__section-label">
-      Achievements ({{ unlockedIds().size }}/{{ achievements.length }})
-    </h2>
-    <div class="stats__achievements">
-      @for (achievement of achievements; track achievement.id) {
-        <div
-          class="stats__achievement"
-          [class.stats__achievement--unlocked]="isUnlocked(achievement.id)"
-          [title]="achievement.description"
-        >
-          @if (!isUnlocked(achievement.id)) {
-            <svg
-              class="stats__achievement-lock"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <rect x="5" y="11" width="14" height="9" rx="2" />
-              <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke-linecap="square" />
-            </svg>
-          }
-          <span class="stats__achievement-title">{{ achievement.title }}</span>
-        </div>
-      }
-    </div>
-  </section>
-
-  <app-button variant="ghost" [fullWidth]="true" (pressed)="goToMenu()">Back to Menu</app-button>
+    @if (hasKeys()) {
+      <section class="block" aria-labelledby="keys">
+        <h2 id="keys">Keys you miss</h2>
+        <app-key-map [tally]="data().keys" />
+        @if (weak().length >= 3) {
+          <p class="block__note">
+            Worst: <strong>{{ weak().join(', ') }}</strong
+            >.
+            <a routerLink="/play/drill">Drill them</a>
+          </p>
+        }
+      </section>
+    }
+  }
 </main>

@@ -1,35 +1,24 @@
-import { Locator, Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
 
-/**
- * Prerendered routes hydrate client-side after the initial paint;
- * interacting with the page before hydration finishes attaching Angular's
- * event listeners can silently drop the interaction once hydration
- * reconciles the DOM back to the component's actual state. Waiting for
- * network idle is a reliable-in-practice proxy for "hydration is done".
- */
+/** Prerendered pages hydrate after first paint; wait so input isn't dropped. */
 export async function gotoReady(page: Page, path: string): Promise<void> {
   await page.goto(path);
   await page.waitForLoadState('networkidle');
 }
 
-/** Focuses the element and presses Enter - exercises keyboard activation
- * without depending on the exact tab order (covered separately by axe). */
-export async function activateWithKeyboard(locator: Locator): Promise<void> {
-  await locator.focus();
-  await locator.press('Enter');
+export async function currentWord(page: Page): Promise<string> {
+  const label = await page.locator('#field').getAttribute('aria-label');
+  return (label ?? '').replace('Type the word: ', '');
 }
 
-/** Reads the current word, types it, and submits with Enter - repeats until /results. */
-export async function playRoundToCompletion(page: Page, maxWords = 12): Promise<void> {
-  const wordLocator = page.locator('.game__word');
-  const inputLocator = page.locator('.game__input');
-
-  for (let i = 0; i < maxWords; i++) {
-    if (page.url().includes('/results')) return;
-    await expect(wordLocator).toBeVisible();
-    const word = (await wordLocator.textContent())?.trim() ?? '';
-    await inputLocator.fill(word);
-    await inputLocator.press('Enter');
-    await page.waitForTimeout(50);
+/** Types the words on screen, one key at a time, like a person would. */
+export async function typeWords(page: Page, count: number): Promise<void> {
+  for (let i = 0; i < count; i++) {
+    const word = await currentWord(page);
+    await page.keyboard.type(word, { delay: 15 });
+    await page.waitForFunction(
+      (w) => !document.querySelector('#field')?.getAttribute('aria-label')?.endsWith(` ${w}`),
+      word,
+    );
   }
 }

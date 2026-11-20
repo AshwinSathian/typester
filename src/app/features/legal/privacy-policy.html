@@ -1,64 +1,45 @@
 <main id="main-content" class="legal">
-  <h1 class="legal__title">Privacy Policy</h1>
-  <p class="legal__updated">Last updated: July 9, 2026</p>
+  <app-page-header title="Privacy Policy" />
+  <p class="legal__updated">Last updated: November 21, 2026</p>
 
   <p>
-    Typester is designed so that almost nothing about how you play ever leaves your device. This
-    page explains exactly what data exists, where it's stored, and the one outbound network request
-    the app makes on your behalf.
+    Typester runs entirely in your browser. It has no accounts, no analytics, no ads and no cookies,
+    and it sends nothing about you or your games anywhere.
   </p>
 
   <h2>What's stored, and where</h2>
   <p>
-    Your settings (theme, sound, motion preference, Quick Play duration), your best scores per game
-    mode, and any achievements you've unlocked are stored using your browser's
-    <code>localStorage</code>, scoped to this site's origin. This data:
+    Your settings (theme, motion, sound), your best score for each mode, your Daily scores for the
+    last 60 days, your 40 most recent runs, your day streak and a count of hits and misses for each
+    letter are saved in your browser's <code>localStorage</code> for this site. That data:
   </p>
   <ul>
-    <li>never leaves your browser or gets transmitted to any server;</li>
-    <li>is not linked to any account, since Typester has no accounts or sign-in;</li>
+    <li>stays on this device and in this browser;</li>
+    <li>is not tied to any account or identity;</li>
     <li>
-      persists only on the device and browser you're using, and clearing your browser's site data
-      for this domain removes it completely.
+      can be removed with "Clear scores" in Settings, or all of it by clearing this site's data in
+      your browser.
     </li>
   </ul>
 
-  <h2>The one network request Typester makes</h2>
+  <h2>Network requests</h2>
   <p>
-    At the start of each round, Typester requests a fresh set of words from Datamuse (<a
-      href="https://www.datamuse.com/api/"
-      target="_blank"
-      rel="noopener"
-      >api.datamuse.com</a
-    >), a public word-lookup service. That request contains only a word-length pattern (e.g. "any
-    6-letter word") - no personal data, cookies, or identifiers of any kind are attached or sent. If
-    that request fails, times out, or you're offline, Typester falls back to a word list bundled
-    with the app itself, so a round can always be played without any network access at all.
+    After the app loads, Typester makes no network requests of its own. The word list ships with the
+    app, which is also why it works offline once installed. Sharing a result goes through your
+    device's own share sheet or clipboard, and only when you press Share.
   </p>
 
-  <h2>What Typester does not do</h2>
-  <ul>
-    <li>No accounts, sign-in, or personal information of any kind is collected.</li>
-    <li>
-      No analytics, advertising, or third-party tracking scripts of any kind run on this site.
-    </li>
-    <li>No cookies are set by this app.</li>
-    <li>
-      No data is sold, shared, or used for any purpose beyond running the game you're playing.
-    </li>
-  </ul>
+  <h2>Hosting</h2>
+  <p>
+    The site is served by Cloudflare. Like any web host, Cloudflare handles the requests your
+    browser makes to load the site; Typester adds no tracking of its own on top.
+  </p>
 
   <h2>Children's privacy</h2>
-  <p>
-    Because Typester collects no personal information from any user, it does not knowingly collect
-    personal information from children.
-  </p>
+  <p>Typester collects no personal information from anyone, children included.</p>
 
   <h2>Changes to this policy</h2>
-  <p>
-    If this policy changes, the "last updated" date above will change accordingly. Continued use of
-    Typester after an update constitutes acceptance of the revised policy.
-  </p>
+  <p>If this policy changes, the date at the top changes with it.</p>
 
   <h2>Contact</h2>
   <p>

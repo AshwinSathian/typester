@@ -1,95 +1,54 @@
 @import 'tailwindcss';
 
-/* Self-hosted variable fonts - no Google Fonts CDN request at runtime (see
-   DESIGN-typester.md §Typography). Subsets cover Latin + Latin Extended,
-   which is all an English-only word list needs. */
+/* Recursive, self-hosted: weight 300-1000 plus the Casual axis. Casual (1)
+   is the voice of the game: keycap legends and big numbers. Linear (0) is
+   the voice of the interface around it. One family, two registers. */
 @font-face {
-  font-family: 'Inter Variable';
+  font-family: 'Recursive Variable';
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: 300 1000;
   font-display: swap;
-  src: url('/fonts/inter-variable-latin.woff2') format('woff2');
+  src: url('/fonts/recursive-casl.woff2') format('woff2-variations');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Inter Variable';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/fonts/inter-variable-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
-}
-@font-face {
-  font-family: 'JetBrains Mono Variable';
-  font-style: normal;
-  font-weight: 100 800;
-  font-display: swap;
-  src: url('/fonts/jetbrains-mono-variable-latin.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'JetBrains Mono Variable';
-  font-style: normal;
-  font-weight: 100 800;
-  font-display: swap;
-  src: url('/fonts/jetbrains-mono-variable-latin-ext.woff2') format('woff2');
-  unicode-range:
-    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
-    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
-    U+A720-A7FF;
 }
 
-/* === Design tokens (DESIGN-typester.md §Tokens) === */
+/* === Tokens (DESIGN-typester.md) === */
 :root {
-  /* Brand */
-  /* --color-accent: for text/links/decorative use against the page background.
-     --color-accent-strong: for filled buttons/badges with white text on top -
-     these need very different lightness to each hit 4.5:1 in their own context,
-     which is why they're separate tokens rather than one accent + a CSS filter. */
-  --color-accent: oklch(42% 0.19 265);
-  --color-accent-strong: oklch(38% 0.2 265);
+  color-scheme: light;
+  /* Lilac keyboard case, white keycaps, ultramarine for what you've typed,
+     marigold for gold words and heat. */
+  --bg: #e7e8f2;
+  --bg-deep: #d9dbea;
+  --key: #fcfcff;
+  --key-side: #bcc0d9;
+  --ink: #17182e;
+  --ink-soft: #505372;
+  --accent: #3b2be0;
+  --accent-fill: #3b2be0;
+  --accent-side: #1f1499;
+  --on-accent: #ffffff;
+  --gold: #ffb21e;
+  --gold-side: #b87300;
+  --on-gold: #17182e;
+  --miss: #c8173d;
+  --miss-soft: #ffd3dc;
+  /* Full-heat key on the miss map; ink stays readable at every tint. */
+  --miss-key: #ff8fa6;
 
-  /* Energy accent - a distinct warm hue reserved for in-round momentum
-     (combo multiplier, power words, streak) so it never competes with
-     --color-accent's job of marking primary actions/navigation. Two tokens
-     for the same reason as accent/accent-strong: text-on-bg vs filled-badge
-     each need a different lightness to hit 4.5:1 in their own context. */
-  --color-energy: oklch(52% 0.19 55);
-  --color-energy-strong: oklch(46% 0.2 55);
+  --font: 'Recursive Variable', ui-rounded, system-ui, sans-serif;
+  --casual: 'CASL' 1;
+  --linear: 'CASL' 0;
 
-  /* Semantic feedback */
-  --color-success: oklch(70% 0.17 152);
-  --color-danger: oklch(63% 0.22 25);
-  --color-warning: oklch(78% 0.15 85);
-
-  /* Light theme surface/text */
-  --color-bg: oklch(98% 0.003 265);
-  --color-surface: oklch(100% 0 0);
-  --color-surface-raised: oklch(96% 0.004 265);
-  --color-text: oklch(20% 0.01 265);
-  --color-text-muted: oklch(46% 0.01 265);
-  --color-border: oklch(90% 0.005 265);
-
-  /* Typography */
-  --font-ui: 'Inter Variable', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
-
-  --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.25rem;
   --text-xl: 1.75rem;
-  --text-2xl: 2.5rem;
-  --text-word: clamp(2.5rem, 8vw, 5rem);
+  --text-2xl: 2.75rem;
+  --text-hero: clamp(3.5rem, 12vw, 7.5rem);
+  --keycap: clamp(2.6rem, 15vw, 4.75rem);
 
-  /* Spacing & radius */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -97,177 +56,239 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-12: 3rem;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1.25rem;
+  --space-16: 4rem;
 
-  /* Motion */
-  --duration-instant: 100ms;
-  --duration-fast: 180ms;
-  --duration-base: 260ms;
-  --duration-slow: 420ms;
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --radius-key: 0.75rem;
+  --radius-panel: 1.25rem;
+  /* How far a keycap travels when pressed. */
+  --travel: 6px;
+  --key-shadow: 0 var(--travel) 0 var(--key-side), 0 calc(var(--travel) + 8px) 18px -10px #17182e66;
+
+  --d-instant: 80ms;
+  --d-fast: 160ms;
+  --d-base: 240ms;
+  --d-slow: 420ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* Elevation - depth for grouped/raised surfaces (settings section cards,
-     toast, dialog, the segmented control's selected pill) so "raised" reads
-     as raised, not just a different fill. One scale for both themes -
-     what conveys elevation is the surface-fill step (surface-raised vs
-     surface), not the shadow's exact color. */
-  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 8%);
-  --shadow-md: 0 4px 16px oklch(0% 0 0 / 12%);
-  --shadow-lg: 0 8px 32px oklch(0% 0 0 / 20%);
-
-  /* Background texture - a faint dot grid in light mode, replaced by a
-     scanline texture in dark mode (see :root[data-theme='dark'] below) so
-     dark mode has a genuinely distinct identity rather than being a pure
-     lightness inversion. */
-  --bg-texture-image: radial-gradient(
-    circle at 1px 1px,
-    color-mix(in oklch, var(--color-border) 70%, transparent) 1px,
-    transparent 0
-  );
-  --bg-texture-size: 24px 24px;
-
-  color-scheme: light;
 }
 
+/* Dark: the same keyboard at night. Declared twice, for the explicit
+   setting and for the system preference; keep the two blocks in sync. */
 :root[data-theme='dark'] {
-  --color-bg: oklch(18% 0.01 265);
-  --color-surface: oklch(23% 0.012 265);
-  --color-surface-raised: oklch(28% 0.014 265);
-  --color-text: oklch(96% 0.003 265);
-  --color-text-muted: oklch(70% 0.01 265);
-  --color-border: oklch(32% 0.012 265);
-  --color-accent: oklch(72% 0.18 265);
-  --color-energy: oklch(78% 0.17 60);
-  --color-energy-strong: oklch(70% 0.19 58);
-  --color-success: oklch(76% 0.16 152);
-  --color-danger: oklch(70% 0.2 25);
-  --color-warning: oklch(82% 0.14 85);
-
-  /* Faint horizontal scanlines instead of the light theme's dot grid - a
-     "precision instrument" personality distinct from a simple inversion. */
-  --bg-texture-image: repeating-linear-gradient(
-    0deg,
-    color-mix(in oklch, var(--color-border) 40%, transparent) 0px,
-    transparent 1px,
-    transparent 3px
-  );
-  --bg-texture-size: auto;
-
   color-scheme: dark;
+  --bg: #15162a;
+  --bg-deep: #0e0f20;
+  --key: #2b2d50;
+  --key-side: #0a0b18;
+  --ink: #edeeff;
+  --ink-soft: #a7aad0;
+  --accent: #a59bff;
+  --accent-fill: #5644ff;
+  --accent-side: #24198f;
+  --miss: #ff7089;
+  --miss-soft: #4a1726;
+  --miss-key: #b3264a;
+  --key-shadow: 0 var(--travel) 0 var(--key-side), 0 calc(var(--travel) + 8px) 18px -10px #000000aa;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --color-bg: oklch(18% 0.01 265);
-    --color-surface: oklch(23% 0.012 265);
-    --color-surface-raised: oklch(28% 0.014 265);
-    --color-text: oklch(96% 0.003 265);
-    --color-text-muted: oklch(70% 0.01 265);
-    --color-border: oklch(32% 0.012 265);
-    --color-accent: oklch(72% 0.18 265);
-    --color-energy: oklch(78% 0.17 60);
-    --color-energy-strong: oklch(70% 0.19 58);
-    --color-success: oklch(76% 0.16 152);
-    --color-danger: oklch(70% 0.2 25);
-    --color-warning: oklch(82% 0.14 85);
-    --bg-texture-image: repeating-linear-gradient(
-      0deg,
-      color-mix(in oklch, var(--color-border) 40%, transparent) 0px,
-      transparent 1px,
-      transparent 3px
-    );
-    --bg-texture-size: auto;
     color-scheme: dark;
+    --bg: #15162a;
+    --bg-deep: #0e0f20;
+    --key: #2b2d50;
+    --key-side: #0a0b18;
+    --ink: #edeeff;
+    --ink-soft: #a7aad0;
+    --accent: #a59bff;
+    --accent-fill: #5644ff;
+    --accent-side: #24198f;
+    --miss: #ff7089;
+    --miss-soft: #4a1726;
+    --miss-key: #b3264a;
+    --key-shadow:
+      0 var(--travel) 0 var(--key-side), 0 calc(var(--travel) + 8px) 18px -10px #000000aa;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root {
-    --duration-instant: 0ms;
-    --duration-fast: 0ms;
-    --duration-base: 0ms;
-    --duration-slow: 0ms;
+  :root:not([data-motion='full']) {
+    --d-instant: 0ms;
+    --d-fast: 0ms;
+    --d-base: 0ms;
+    --d-slow: 0ms;
   }
 }
-
-/* Explicit override always wins, regardless of the media query above. */
-:root[data-motion='full'] {
-  --duration-instant: 100ms;
-  --duration-fast: 180ms;
-  --duration-base: 260ms;
-  --duration-slow: 420ms;
-}
 :root[data-motion='reduced'] {
-  --duration-instant: 0ms;
-  --duration-fast: 0ms;
-  --duration-base: 0ms;
-  --duration-slow: 0ms;
+  --d-instant: 0ms;
+  --d-fast: 0ms;
+  --d-base: 0ms;
+  --d-slow: 0ms;
 }
 
-@theme {
-  --color-accent: var(--color-accent);
-  --color-accent-strong: var(--color-accent-strong);
-  --color-energy: var(--color-energy);
-  --color-energy-strong: var(--color-energy-strong);
-  --color-success: var(--color-success);
-  --color-danger: var(--color-danger);
-  --color-warning: var(--color-warning);
-  --color-bg: var(--color-bg);
-  --color-surface: var(--color-surface);
-  --color-surface-raised: var(--color-surface-raised);
-  --color-text: var(--color-text);
-  --color-text-muted: var(--color-text-muted);
-  --color-border: var(--color-border);
-
-  --font-sans: var(--font-ui);
-  --font-mono: var(--font-mono);
-
-  --text-word: var(--text-word);
-
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-
-  --shadow-sm: var(--shadow-sm);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
+@theme inline {
+  --font-sans: var(--font);
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
 }
 
-html,
-body {
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  background-color: var(--color-bg);
-  background-image: var(--bg-texture-image);
-  background-size: var(--bg-texture-size);
-  color: var(--color-text);
-  font-family: var(--font-ui);
+/* === Base === */
+html {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-variation-settings: var(--linear);
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* A single, never-removed focus-visible treatment for every interactive
-   element (see DESIGN-typester.md accessibility checklist). */
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
-/* Visually-hidden but screen-reader-accessible content - shared globally so
-   every component can reuse the same utility instead of each redeclaring it. */
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Focus moved by script (e.g. to a results heading) needs no ring. */
+[tabindex='-1']:focus {
+  outline: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -100px;
+  z-index: 10;
+  padding: var(--space-2) var(--space-4);
+  background: var(--key);
+  color: var(--ink);
+  border-radius: var(--radius-key);
+}
+.skip-link:focus {
+  top: var(--space-4);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* === Keycaps: the one physical object in the design ===
+   Anything you can press, and every letter you type, is a keycap. A cap
+   sits on its skirt (the solid shadow) and travels down when pressed. */
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   border: 0;
+  border-radius: var(--radius-key);
+  background: var(--key);
+  color: var(--ink);
+  font: inherit;
+  font-variation-settings: var(--casual);
+  font-weight: 700;
+  box-shadow: var(--key-shadow);
+  transform: translateY(0);
+  transition:
+    transform var(--d-instant) var(--ease),
+    box-shadow var(--d-instant) var(--ease),
+    background-color var(--d-fast) var(--ease),
+    color var(--d-fast) var(--ease);
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+}
+
+.key:active,
+.key.is-down {
+  transform: translateY(calc(var(--travel) - 1px));
+  box-shadow: 0 1px 0 var(--key-side);
+}
+
+.key--accent {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  --key-side: var(--accent-side);
+}
+
+.key--gold {
+  background: var(--gold);
+  color: var(--on-gold);
+  --key-side: var(--gold-side);
+}
+
+/* A plain text button for low-emphasis actions next to keycaps. */
+.link-button {
+  border: 0;
+  background: none;
+  padding: var(--space-2) var(--space-1);
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color var(--d-fast) var(--ease);
+}
+.link-button:hover {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
+
+/* Small inline key hint, e.g. "Enter" next to an action. */
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.4em;
+  border-radius: 0.35em;
+  background: var(--bg-deep);
+  color: inherit;
+  font: inherit;
+  font-size: 0.8em;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: center;
+}
+.key--accent kbd {
+  background: #00000033;
+}
+
+/* Touch: text links grow to a 44px target, and keyboard hints go, since
+   there is no Esc or Enter key to press. */
+@media (pointer: coarse) {
+  .tap,
+  .link-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  kbd {
+    display: none;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--d-base);
 }

@@ -1,121 +1,93 @@
-.stats {
-  max-width: 32rem;
+.page {
+  max-width: 44rem;
   margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-16);
+}
+
+.empty p {
+  max-width: 40ch;
+  font-size: var(--text-lg);
+}
+.empty__cta {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-lg);
+}
+
+.totals {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-  padding: var(--space-8) var(--space-4);
-}
-
-.stats__title {
-  font-size: var(--text-xl);
-  font-weight: 700;
-  margin: 0;
-}
-
-.stats__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.stats__section-label {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
-.stats__card {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.stats__card--summary {
-  flex-direction: row;
   flex-wrap: wrap;
+  gap: var(--space-4) var(--space-12);
+  margin: 0 0 var(--space-12);
+}
+.totals dt {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.totals dd {
+  margin: 0;
+  font-variation-settings: var(--casual);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.block {
+  margin-bottom: var(--space-12);
+}
+.block h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+.block__note {
+  margin: var(--space-4) 0 0;
+  color: var(--ink-soft);
+}
+
+.bests {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bests__row {
+  display: grid;
+  grid-template-columns: 6rem auto 1fr;
+  align-items: baseline;
   gap: var(--space-4);
-  padding: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 2px solid var(--bg-deep);
 }
-
-.stats__combo-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--color-border);
-}
-
-.stats__combo-row:first-child {
-  border-top: none;
-}
-
-.stats__combo-label {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.stats__combo-score {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--color-accent);
+.bests__mode {
   font-weight: 700;
 }
+.bests__score {
+  font-variation-settings: var(--casual);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xl);
+  font-weight: 900;
+}
+.bests__meta {
+  color: var(--ink-soft);
+}
 
-.stats__combo-unplayed {
+.bars {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  align-items: flex-end;
+  gap: 3px;
+  height: 8rem;
+}
+.bars__bar {
+  flex: 1;
+  max-width: 1.25rem;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent-fill);
+}
+.bars__bar:last-child {
+  background: var(--gold);
 }
 
-.stats__combo-placeholder {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-}
-
-.stats__achievements {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-/* Locked achievements are visibly locked (a muted fill, dashed border, and a
-   lock glyph), not just "already there but grey" - the full possibility
-   space is legible before it's earned. Deliberately not opacity-faded:
-   fading --color-text-muted further drops its contrast below WCAG AA - the
-   muted token is already the "recede" signal on its own. */
-.stats__achievement {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
-  border: 1px dashed var(--color-border);
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-  font-weight: 600;
-}
-
-.stats__achievement-lock {
-  width: 0.9rem;
-  height: 0.9rem;
-  flex-shrink: 0;
-}
-
-/* Celebratory fill for unlocked achievements - reads as "earned" at a
-   glance, matching the upgraded Results-screen chip treatment. */
-.stats__achievement--unlocked {
-  background: color-mix(in oklch, var(--color-accent) 12%, var(--color-surface));
-  border: 1px solid var(--color-accent);
-  color: var(--color-accent-strong);
+.block app-key-map {
+  --map-align: start;
 }
