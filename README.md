@@ -51,7 +51,14 @@ A pre-commit hook runs Prettier and ESLint on staged files.
 
 ## Deployment
 
-Cloudflare Workers Builds watches `main`. Each push runs
-`npm run build -- --configuration production` and `npx wrangler deploy`,
-which serves `dist/typester/browser` as static assets with single-page-app
-fallback (`wrangler.jsonc`).
+```bash
+npm run build -- --configuration production
+npx wrangler deploy
+```
+
+`wrangler deploy` serves `dist/typester/browser` as static assets with
+single-page-app fallback (`wrangler.jsonc`, which pins the Cloudflare
+account). Cloudflare Workers Builds is meant to run the same two commands on
+every push to `main`, but as of November 2026 pushes were not producing new
+deployments, so check the live site after a push and deploy by hand if it
+hasn't changed.

@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "typester",
+  // Personal account. The login can see more than one account, so pin it.
+  "account_id": "5e8cabf1f94e15e681dfe58d4164a8ed",
   "compatibility_date": "2026-07-20",
   "assets": {
     "directory": "dist/typester/browser",
