@@ -14,8 +14,10 @@ import { Component, computed, input } from '@angular/core';
     // Re-keyed on every miss so the shake animation restarts.
     '[attr.data-miss]': 'missParity()',
   },
+  // Keyed by word as well as position, so a new word gets fresh caps instead
+  // of the last word's caps visibly springing back up.
   template: `
-    @for (letter of letters(); track $index) {
+    @for (letter of letters(); track text() + $index) {
       <span
         class="key keycap-word__cap"
         [class.key--accent]="$index < typed() && !gold()"
