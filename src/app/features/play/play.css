@@ -118,7 +118,7 @@
   opacity: 0.6;
 }
 .stage__next .stage__next--gold {
-  color: var(--gold-side);
+  color: var(--gold-ink);
   text-decoration: underline 3px var(--gold);
   text-underline-offset: 0.2em;
 }
@@ -150,7 +150,7 @@
   animation: float-up calc(var(--d-slow) * 1.6) var(--ease) forwards;
 }
 .popup--gold {
-  color: var(--gold-side);
+  color: var(--gold-ink);
   font-size: var(--text-xl);
 }
 @keyframes float-up {

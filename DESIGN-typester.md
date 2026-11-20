@@ -28,19 +28,20 @@ too. Everything else stays flat and quiet so the keys carry the screen.
 Light is a lilac keyboard case with white caps; dark is the same keyboard at
 night. Colour roles are the same in both.
 
-| Token           | Light     | Dark      | Use                                     |
-| --------------- | --------- | --------- | --------------------------------------- |
-| `--bg`          | `#e7e8f2` | `#15162a` | page                                    |
-| `--bg-deep`     | `#d9dbea` | `#0e0f20` | panels, tracks, `kbd`                   |
-| `--key`         | `#fcfcff` | `#2b2d50` | keycap top                              |
-| `--key-side`    | `#bcc0d9` | `#0a0b18` | keycap skirt (the solid shadow)         |
-| `--ink`         | `#17182e` | `#edeeff` | text                                    |
-| `--ink-soft`    | `#505372` | `#a7aad0` | secondary text                          |
-| `--accent`      | `#3b2be0` | `#a59bff` | links, cursor, chart line               |
-| `--accent-fill` | `#3b2be0` | `#5644ff` | typed keys, primary button (white text) |
-| `--gold`        | `#ffb21e` | same      | gold words, multiplier, heat            |
-| `--miss`        | `#c8173d` | `#ff7089` | misses, low time                        |
-| `--miss-key`    | `#ff8fa6` | `#b3264a` | full-heat key on the miss map           |
+| Token           | Light     | Dark      | Use                                       |
+| --------------- | --------- | --------- | ----------------------------------------- |
+| `--bg`          | `#e7e8f2` | `#15162a` | page                                      |
+| `--bg-deep`     | `#d9dbea` | `#0e0f20` | panels, tracks, `kbd`                     |
+| `--key`         | `#fcfcff` | `#2b2d50` | keycap top                                |
+| `--key-side`    | `#bcc0d9` | `#0a0b18` | keycap skirt (the solid shadow)           |
+| `--ink`         | `#17182e` | `#edeeff` | text                                      |
+| `--ink-soft`    | `#505372` | `#a7aad0` | secondary text                            |
+| `--accent`      | `#3b2be0` | `#a59bff` | links, cursor, chart line                 |
+| `--accent-fill` | `#3b2be0` | `#5644ff` | typed keys, primary button (white text)   |
+| `--gold`        | `#ffb21e` | same      | gold words, multiplier, heat              |
+| `--gold-ink`    | `#8a5600` | `#ffb21e` | gold as text: next gold word, gold points |
+| `--miss`        | `#c8173d` | `#ff7089` | misses, low time                          |
+| `--miss-key`    | `#ff8fa6` | `#b3264a` | full-heat key on the miss map             |
 
 All text pairs pass 4.5:1 in both themes; the axe suite checks this on every
 screen. Never fade text with opacity to make it secondary; use `--ink-soft`.

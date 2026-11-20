@@ -32,6 +32,8 @@
   --gold: #ffb21e;
   --gold-side: #b87300;
   --on-gold: #17182e;
+  /* Gold as text on the page: darker in light, the fill itself in dark. */
+  --gold-ink: #8a5600;
   --miss: #c8173d;
   --miss-soft: #ffd3dc;
   /* Full-heat key on the miss map; ink stays readable at every tint. */
@@ -88,6 +90,7 @@
   --miss: #ff7089;
   --miss-soft: #4a1726;
   --miss-key: #b3264a;
+  --gold-ink: #ffb21e;
   --key-shadow: 0 var(--travel) 0 var(--key-side), 0 calc(var(--travel) + 8px) 18px -10px #000000aa;
 }
 
@@ -106,6 +109,7 @@
     --miss: #ff7089;
     --miss-soft: #4a1726;
     --miss-key: #b3264a;
+    --gold-ink: #ffb21e;
     --key-shadow:
       0 var(--travel) 0 var(--key-side), 0 calc(var(--travel) + 8px) 18px -10px #000000aa;
   }

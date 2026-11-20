@@ -34,3 +34,35 @@ for (const theme of ['light', 'dark'] as const) {
     });
   });
 }
+
+// Gold words are random, and axe can't measure text over the play screen's
+// gradient, so compute the gold text's contrast against the page colour.
+for (const theme of ['light', 'dark'] as const) {
+  test(`gold text has 4.5:1 contrast in ${theme}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: theme });
+    await gotoReady(page, '/play/rush');
+    const ratio = await page.evaluate(() => {
+      const span = document.querySelector('.stage__next span')!;
+      span.classList.add('stage__next--gold');
+      const rgb = (css: string) => {
+        const probe = document.createElement('i');
+        probe.style.color = css;
+        document.body.append(probe);
+        const [r, g, b] = getComputedStyle(probe).color.match(/\d+/g)!.map(Number);
+        probe.remove();
+        return [r, g, b];
+      };
+      const lum = ([r, g, b]: number[]) => {
+        const c = [r, g, b].map((v) => {
+          const s = v / 255;
+          return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      };
+      const fg = lum(rgb(getComputedStyle(span).color));
+      const bg = lum(rgb('var(--bg)'));
+      return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+    });
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+}
