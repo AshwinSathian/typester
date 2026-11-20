@@ -1,7 +1,7 @@
 {
   "name": "typester",
-  "version": "2.0.0",
-  "description": "A keyboard-first typing speed game built with Angular, signals, and Tailwind CSS.",
+  "version": "3.0.0",
+  "description": "A typing game where every word buys time, built with Angular signals and Tailwind CSS.",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
